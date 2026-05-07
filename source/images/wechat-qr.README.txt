@@ -1,0 +1,9 @@
+Optional WeChat QR placeholder.
+
+If you want the WeChat button to show your QR code later,
+replace this note with an actual image file named:
+
+wechat-qr.png
+
+Suggested path:
+source/images/wechat-qr.png

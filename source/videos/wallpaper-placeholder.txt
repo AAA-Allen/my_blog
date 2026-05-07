@@ -1,0 +1,12 @@
+Put your wallpaper video here and rename it to:
+
+wallpaper.mp4
+
+Expected path:
+/videos/wallpaper.mp4
+
+After replacing the file, run:
+
+npx hexo clean
+npx hexo generate
+npx hexo server

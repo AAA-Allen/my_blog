@@ -1,0 +1,8 @@
+node_modules/
+public/
+db.json
+.deploy*/
+.env
+.env.*
+Thumbs.db
+.DS_Store

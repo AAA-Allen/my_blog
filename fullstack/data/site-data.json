@@ -1,0 +1,153 @@
+{
+  "site": {
+    "title": "朝花夕拾",
+    "tagline": "记录生活、分享知识、探索世界。",
+    "copyright": "© 2026 朝花夕拾. All rights reserved.",
+    "announcement": "欢迎来到朝花夕拾。这里存放夜色、海风、灵感与日常的碎片。",
+    "visitorBase": 5529519,
+    "viewBase": 78914166,
+    "updatedAt": "2026-05-07T18:30:00.000Z"
+  },
+  "profile": {
+    "name": "Allen",
+    "bio": "分享热爱与灵感的记录者",
+    "about": "你好，我是 Allen。喜欢记录动漫、音乐、技术和生活里的微光时刻，也会把折腾博客的过程慢慢写下来。",
+    "avatar": "/images/avatar.jpg",
+    "socials": [
+      { "label": "GitHub", "icon": "fa-brands fa-github", "url": "https://github.com/" },
+      { "label": "Weibo", "icon": "fa-brands fa-weibo", "url": "https://weibo.com/" },
+      { "label": "TikTok", "icon": "fa-brands fa-tiktok", "url": "https://www.douyin.com/" }
+    ]
+  },
+  "navigation": [
+    { "label": "首页", "href": "/", "icon": "fa-solid fa-house" },
+    { "label": "归档", "href": "/archive", "icon": "fa-solid fa-box-archive" },
+    { "label": "分类", "href": "/categories", "icon": "fa-solid fa-layer-group" },
+    { "label": "标签", "href": "/tags", "icon": "fa-solid fa-tags" },
+    { "label": "时光机", "href": "/timeline", "icon": "fa-regular fa-clock" },
+    { "label": "关于我", "href": "/about", "icon": "fa-regular fa-user" }
+  ],
+  "articles": [
+    {
+      "slug": "hello-world",
+      "title": "Hello World",
+      "excerpt": "欢迎来到朝花夕拾。这里是博客原型升级后的第一篇文章，用更完整的页面结构记录夜色、风景与成长。",
+      "content": "<p>这是博客的第一篇文章。页面保留了动态 MP4 背景、玻璃拟态卡片和带旋转唱片的音乐播放器，同时也补上了真实的后端路由、文章接口和详情页。</p><p>我想把这里做成一个轻盈而安静的地方，用来收集动画里喜欢的镜头、城市夜晚的风、学习中踩过的坑，还有每一次灵感突然降临的时刻。</p><p>如果你愿意，也欢迎从时间线翻回过去，看看这些被认真保存下来的小瞬间。</p>",
+      "date": "2026-04-29",
+      "category": "Journal",
+      "tags": ["Intro", "Dreamy UI", "Hexo"],
+      "image": "/videos/wallpaper.mp4",
+      "heroType": "video"
+    },
+    {
+      "slug": "moonlit-notes",
+      "title": "Moonlit Notes",
+      "excerpt": "用月色和渐变重构博客首页，让信息密度与留白保持恰到好处的平衡。",
+      "content": "<p>这次改版的重点不是堆功能，而是让页面在视觉上更像一张带呼吸感的海报。卡片需要足够轻，背景视频需要被看见，信息又不能难以阅读。</p><p>我尝试把公告、网站信息和音乐播放器做成更清晰的层次关系，让视线自然地从主文章滑向侧边栏，再落到播放器的唱片上。</p>",
+      "date": "2026-05-02",
+      "category": "Design",
+      "tags": ["Glassmorphism", "Layout", "UI"],
+      "image": "/videos/wallpaper.mp4",
+      "heroType": "video"
+    },
+    {
+      "slug": "stargazer-playlist",
+      "title": "Stargazer Playlist",
+      "excerpt": "把常听的旋律做成页面的一部分，让音乐播放器不只是组件，而是氛围本身。",
+      "content": "<p>音乐播放器是这个页面里最有情绪的一块区域。唱片旋转、封面切换、播放列表显隐，这些交互都不应该抢戏，但又必须足够顺手。</p><p>播放器数据由接口提供，前端负责读取曲目、更新状态和展示播放进度。这样后面替换成真实音频资源也会更方便。</p>",
+      "date": "2026-05-07",
+      "category": "Music",
+      "tags": ["Audio", "Interaction", "Prototype"],
+      "image": "/videos/wallpaper.mp4",
+      "heroType": "video"
+    },
+    {
+      "slug": "city-lights-and-routing",
+      "title": "City Lights and Routing",
+      "excerpt": "给原型补上多页面路由和动态数据，让首页、归档、分类、标签与详情页真正连起来。",
+      "content": "<p>当页面开始承载真实内容时，路由就不只是跳转，而是叙事顺序的一部分。首页负责吸引视线，归档负责整理脉络，时间线负责让过去被重新看见。</p><p>这次实现里，我把页面拆成数据接口、路由入口和统一的前端渲染逻辑，让结构保持清楚，也方便继续迭代。</p>",
+      "date": "2026-05-10",
+      "category": "Development",
+      "tags": ["Express", "Routing", "Backend"],
+      "image": "/videos/wallpaper.mp4",
+      "heroType": "video"
+    }
+  ],
+  "playlist": [
+    {
+      "id": "lemon",
+      "title": "Lemon",
+      "artist": "Prototype Mix",
+      "subtitle": "未闻花名的晚风，吹向银河彼岸。",
+      "cover": {
+        "label": "Lemon",
+        "from": "#6ea8ff",
+        "to": "#7267ff"
+      },
+      "notes": [
+        { "frequency": 392.0, "beats": 0.6 },
+        { "frequency": 440.0, "beats": 0.6 },
+        { "frequency": 523.25, "beats": 0.8 },
+        { "frequency": 587.33, "beats": 0.8 },
+        { "frequency": 523.25, "beats": 0.7 },
+        { "frequency": 440.0, "beats": 0.7 },
+        { "frequency": 392.0, "beats": 1.1 },
+        { "frequency": 329.63, "beats": 0.9 },
+        { "frequency": 349.23, "beats": 0.9 },
+        { "frequency": 440.0, "beats": 1.2 },
+        { "frequency": 0, "beats": 0.3 }
+      ],
+      "bpm": 96
+    },
+    {
+      "id": "starlight",
+      "title": "Starlight",
+      "artist": "Prototype Mix",
+      "subtitle": "繁星落在云层之上，城市开始发光。",
+      "cover": {
+        "label": "Star",
+        "from": "#8e86ff",
+        "to": "#4d9cff"
+      },
+      "notes": [
+        { "frequency": 523.25, "beats": 0.7 },
+        { "frequency": 659.25, "beats": 0.7 },
+        { "frequency": 783.99, "beats": 0.8 },
+        { "frequency": 698.46, "beats": 0.8 },
+        { "frequency": 659.25, "beats": 0.7 },
+        { "frequency": 587.33, "beats": 0.7 },
+        { "frequency": 523.25, "beats": 1.1 },
+        { "frequency": 392.0, "beats": 0.9 },
+        { "frequency": 440.0, "beats": 0.9 },
+        { "frequency": 523.25, "beats": 1.2 },
+        { "frequency": 0, "beats": 0.3 }
+      ],
+      "bpm": 108
+    },
+    {
+      "id": "night-ride",
+      "title": "Night Ride",
+      "artist": "Prototype Mix",
+      "subtitle": "公路尽头的霓虹，仍在轻轻闪烁。",
+      "cover": {
+        "label": "Ride",
+        "from": "#2b3870",
+        "to": "#9961ff"
+      },
+      "notes": [
+        { "frequency": 293.66, "beats": 0.8 },
+        { "frequency": 349.23, "beats": 0.8 },
+        { "frequency": 392.0, "beats": 0.9 },
+        { "frequency": 440.0, "beats": 0.9 },
+        { "frequency": 392.0, "beats": 0.8 },
+        { "frequency": 349.23, "beats": 0.8 },
+        { "frequency": 293.66, "beats": 1.1 },
+        { "frequency": 261.63, "beats": 0.9 },
+        { "frequency": 293.66, "beats": 0.9 },
+        { "frequency": 349.23, "beats": 1.2 },
+        { "frequency": 0, "beats": 0.3 }
+      ],
+      "bpm": 102
+    }
+  ]
+}

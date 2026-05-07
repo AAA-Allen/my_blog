@@ -1,0 +1,75 @@
+# Butterfly override config
+
+avatar:
+  img: /images/avatar.jpg
+  effect: true
+
+aplayer:
+  meting: false
+  asset_inject: false
+
+aplayerInject:
+  enable: false
+  per_page: true
+
+pjax:
+  enable: true
+
+inject:
+  head:
+    - <link rel="stylesheet" href="/css/custom.css">
+  bottom:
+    - >-
+      <aside class="allen-feature-panel">
+      <section class="allen-feature-card">
+      <div class="allen-feature-card__title">时间</div>
+      <div class="allen-clock" id="allen-clock-time">--:--:--</div>
+      <div class="allen-clock-date" id="allen-clock-date">----</div>
+      </section>
+      <section class="allen-feature-card">
+      <div class="allen-feature-card__title">日历</div>
+      <div class="allen-calendar">
+      <div class="allen-calendar__header">
+      <button class="allen-calendar__nav" type="button" id="allen-calendar-prev" aria-label="上个月">&lt;</button>
+      <div class="allen-calendar__heading">
+      <span id="allen-calendar-month">----</span>
+      <span id="allen-calendar-day">--</span>
+      </div>
+      <button class="allen-calendar__nav" type="button" id="allen-calendar-next" aria-label="下个月">&gt;</button>
+      </div>
+      <div class="allen-calendar__week">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="allen-calendar__grid" id="allen-calendar-grid"></div>
+      </div>
+      </section>
+      <section class="allen-feature-card allen-feature-card--player">
+      <div class="allen-music-box">
+      <iframe class="allen-music-box__iframe" frameborder="0" border="0" marginwidth="0" marginheight="0" allow="autoplay" src="https://music.163.com/outchain/player?type=0&id=13362665913&auto=0&height=110"></iframe>
+      </div>
+      </section>
+      <section class="allen-feature-card">
+      <div class="allen-feature-card__title">照片</div>
+      <a class="allen-feature-link" href="/photos/">查看我的照片</a>
+      <p class="allen-feature-note">Put your images in <code>source/images/photos/</code>.</p>
+      </section>
+      <section class="allen-feature-card">
+      <div class="allen-feature-card__title">联系我</div>
+      <div class="allen-social-links">
+      <a class="allen-social-link" href="https://1623831235.qzone.qq.com/?_t_=0.3340703920228524" target="_blank" rel="noopener">QQ</a>
+      <button class="allen-social-link allen-social-link--button" type="button" id="allen-wechat-toggle">WECHAT</button>
+      <a class="allen-social-link" href="https://www.douyin.com/user/self?from_tab_name=main" target="_blank" rel="noopener">DOUYIN</a>
+      </div>
+      <div class="allen-wechat-box" id="allen-wechat-box" hidden>
+      Add your QR image to <code>source/images/wechat-qr.png</code>
+      </div>
+      </section>
+      </aside>
+    - >-
+      <div class="global-video-wallpaper">
+      <video class="global-video-wallpaper__media" autoplay muted loop playsinline>
+      <source src="/videos/wallpaper.mp4" type="video/mp4">
+      </video>
+      <div class="global-video-wallpaper__overlay"></div>
+      </div>
+    - <script src="/js/custom-panel.js"></script>
