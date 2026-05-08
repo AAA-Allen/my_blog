@@ -4,9 +4,48 @@
     "tagline": "记录生活、分享知识、探索世界。",
     "copyright": "© 2026 朝花夕拾. All rights reserved.",
     "announcement": "欢迎来到朝花夕拾。这里存放夜色、海风、灵感与日常的碎片。",
-    "visitorBase": 5529519,
-    "viewBase": 78914166,
+    "visitorBase": 0,
+    "viewBase": 0,
     "updatedAt": "2026-05-07T18:30:00.000Z"
+  },
+  "analytics": {
+    "pageViews": 9,
+    "uniqueVisitors": 2,
+    "likeCount": 0,
+    "commentCount": 0,
+    "lastVisitAt": "2026-05-08T12:40:08.466Z",
+    "daily": {
+      "2026-05-08": {
+        "pageViews": 9,
+        "uniqueVisitors": 2,
+        "uniqueVisitorFingerprints": {
+          "73df87bc32548c48426eafb79a985a94af57e0db": true,
+          "abfaf198f86872e80809d95e9247fa057560e7e0": true
+        }
+      }
+    },
+    "sources": {
+      "直接访问": 9
+    },
+    "thirdParty": {
+      "provider": "plausible",
+      "enabled": false,
+      "domain": "",
+      "scriptUrl": "https://plausible.io/js/script.js",
+      "measurementId": "",
+      "websiteId": "",
+      "clarityId": ""
+    },
+    "visitors": {
+      "73df87bc32548c48426eafb79a985a94af57e0db": {
+        "firstSeenAt": "2026-05-08T12:25:29.543Z",
+        "lastSeenAt": "2026-05-08T12:25:29.543Z"
+      },
+      "abfaf198f86872e80809d95e9247fa057560e7e0": {
+        "firstSeenAt": "2026-05-08T12:33:24.353Z",
+        "lastSeenAt": "2026-05-08T12:40:08.466Z"
+      }
+    }
   },
   "profile": {
     "name": "Allen",
@@ -14,65 +53,56 @@
     "about": "你好，我是 Allen。喜欢记录动漫、音乐、技术和生活里的微光时刻，也会把折腾博客的过程慢慢写下来。",
     "avatar": "/images/avatar.jpg",
     "socials": [
-      { "label": "GitHub", "icon": "fa-brands fa-github", "url": "https://github.com/" },
-      { "label": "Weibo", "icon": "fa-brands fa-weibo", "url": "https://weibo.com/" },
-      { "label": "TikTok", "icon": "fa-brands fa-tiktok", "url": "https://www.douyin.com/" }
+      {
+        "label": "GitHub",
+        "icon": "fa-brands fa-github",
+        "url": "https://github.com/"
+      },
+      {
+        "label": "Weibo",
+        "icon": "fa-brands fa-weibo",
+        "url": "https://weibo.com/"
+      },
+      {
+        "label": "TikTok",
+        "icon": "fa-brands fa-tiktok",
+        "url": "https://www.douyin.com/"
+      }
     ]
   },
   "navigation": [
-    { "label": "首页", "href": "/", "icon": "fa-solid fa-house" },
-    { "label": "归档", "href": "/archive", "icon": "fa-solid fa-box-archive" },
-    { "label": "分类", "href": "/categories", "icon": "fa-solid fa-layer-group" },
-    { "label": "标签", "href": "/tags", "icon": "fa-solid fa-tags" },
-    { "label": "时光机", "href": "/timeline", "icon": "fa-regular fa-clock" },
-    { "label": "关于我", "href": "/about", "icon": "fa-regular fa-user" }
-  ],
-  "articles": [
     {
-      "slug": "hello-world",
-      "title": "Hello World",
-      "excerpt": "欢迎来到朝花夕拾。这里是博客原型升级后的第一篇文章，用更完整的页面结构记录夜色、风景与成长。",
-      "content": "<p>这是博客的第一篇文章。页面保留了动态 MP4 背景、玻璃拟态卡片和带旋转唱片的音乐播放器，同时也补上了真实的后端路由、文章接口和详情页。</p><p>我想把这里做成一个轻盈而安静的地方，用来收集动画里喜欢的镜头、城市夜晚的风、学习中踩过的坑，还有每一次灵感突然降临的时刻。</p><p>如果你愿意，也欢迎从时间线翻回过去，看看这些被认真保存下来的小瞬间。</p>",
-      "date": "2026-04-29",
-      "category": "Journal",
-      "tags": ["Intro", "Dreamy UI", "Hexo"],
-      "image": "/videos/wallpaper.mp4",
-      "heroType": "video"
+      "label": "首页",
+      "href": "/",
+      "icon": "fa-solid fa-house"
     },
     {
-      "slug": "moonlit-notes",
-      "title": "Moonlit Notes",
-      "excerpt": "用月色和渐变重构博客首页，让信息密度与留白保持恰到好处的平衡。",
-      "content": "<p>这次改版的重点不是堆功能，而是让页面在视觉上更像一张带呼吸感的海报。卡片需要足够轻，背景视频需要被看见，信息又不能难以阅读。</p><p>我尝试把公告、网站信息和音乐播放器做成更清晰的层次关系，让视线自然地从主文章滑向侧边栏，再落到播放器的唱片上。</p>",
-      "date": "2026-05-02",
-      "category": "Design",
-      "tags": ["Glassmorphism", "Layout", "UI"],
-      "image": "/videos/wallpaper.mp4",
-      "heroType": "video"
+      "label": "归档",
+      "href": "/archive",
+      "icon": "fa-solid fa-box-archive"
     },
     {
-      "slug": "stargazer-playlist",
-      "title": "Stargazer Playlist",
-      "excerpt": "把常听的旋律做成页面的一部分，让音乐播放器不只是组件，而是氛围本身。",
-      "content": "<p>音乐播放器是这个页面里最有情绪的一块区域。唱片旋转、封面切换、播放列表显隐，这些交互都不应该抢戏，但又必须足够顺手。</p><p>播放器数据由接口提供，前端负责读取曲目、更新状态和展示播放进度。这样后面替换成真实音频资源也会更方便。</p>",
-      "date": "2026-05-07",
-      "category": "Music",
-      "tags": ["Audio", "Interaction", "Prototype"],
-      "image": "/videos/wallpaper.mp4",
-      "heroType": "video"
+      "label": "分类",
+      "href": "/categories",
+      "icon": "fa-solid fa-layer-group"
     },
     {
-      "slug": "city-lights-and-routing",
-      "title": "City Lights and Routing",
-      "excerpt": "给原型补上多页面路由和动态数据，让首页、归档、分类、标签与详情页真正连起来。",
-      "content": "<p>当页面开始承载真实内容时，路由就不只是跳转，而是叙事顺序的一部分。首页负责吸引视线，归档负责整理脉络，时间线负责让过去被重新看见。</p><p>这次实现里，我把页面拆成数据接口、路由入口和统一的前端渲染逻辑，让结构保持清楚，也方便继续迭代。</p>",
-      "date": "2026-05-10",
-      "category": "Development",
-      "tags": ["Express", "Routing", "Backend"],
-      "image": "/videos/wallpaper.mp4",
-      "heroType": "video"
+      "label": "标签",
+      "href": "/tags",
+      "icon": "fa-solid fa-tags"
+    },
+    {
+      "label": "时光机",
+      "href": "/timeline",
+      "icon": "fa-regular fa-clock"
+    },
+    {
+      "label": "关于我",
+      "href": "/about",
+      "icon": "fa-regular fa-user"
     }
   ],
+  "articles": [],
   "playlist": [
     {
       "id": "lemon",
@@ -85,17 +115,50 @@
         "to": "#7267ff"
       },
       "notes": [
-        { "frequency": 392.0, "beats": 0.6 },
-        { "frequency": 440.0, "beats": 0.6 },
-        { "frequency": 523.25, "beats": 0.8 },
-        { "frequency": 587.33, "beats": 0.8 },
-        { "frequency": 523.25, "beats": 0.7 },
-        { "frequency": 440.0, "beats": 0.7 },
-        { "frequency": 392.0, "beats": 1.1 },
-        { "frequency": 329.63, "beats": 0.9 },
-        { "frequency": 349.23, "beats": 0.9 },
-        { "frequency": 440.0, "beats": 1.2 },
-        { "frequency": 0, "beats": 0.3 }
+        {
+          "frequency": 392,
+          "beats": 0.6
+        },
+        {
+          "frequency": 440,
+          "beats": 0.6
+        },
+        {
+          "frequency": 523.25,
+          "beats": 0.8
+        },
+        {
+          "frequency": 587.33,
+          "beats": 0.8
+        },
+        {
+          "frequency": 523.25,
+          "beats": 0.7
+        },
+        {
+          "frequency": 440,
+          "beats": 0.7
+        },
+        {
+          "frequency": 392,
+          "beats": 1.1
+        },
+        {
+          "frequency": 329.63,
+          "beats": 0.9
+        },
+        {
+          "frequency": 349.23,
+          "beats": 0.9
+        },
+        {
+          "frequency": 440,
+          "beats": 1.2
+        },
+        {
+          "frequency": 0,
+          "beats": 0.3
+        }
       ],
       "bpm": 96
     },
@@ -110,17 +173,50 @@
         "to": "#4d9cff"
       },
       "notes": [
-        { "frequency": 523.25, "beats": 0.7 },
-        { "frequency": 659.25, "beats": 0.7 },
-        { "frequency": 783.99, "beats": 0.8 },
-        { "frequency": 698.46, "beats": 0.8 },
-        { "frequency": 659.25, "beats": 0.7 },
-        { "frequency": 587.33, "beats": 0.7 },
-        { "frequency": 523.25, "beats": 1.1 },
-        { "frequency": 392.0, "beats": 0.9 },
-        { "frequency": 440.0, "beats": 0.9 },
-        { "frequency": 523.25, "beats": 1.2 },
-        { "frequency": 0, "beats": 0.3 }
+        {
+          "frequency": 523.25,
+          "beats": 0.7
+        },
+        {
+          "frequency": 659.25,
+          "beats": 0.7
+        },
+        {
+          "frequency": 783.99,
+          "beats": 0.8
+        },
+        {
+          "frequency": 698.46,
+          "beats": 0.8
+        },
+        {
+          "frequency": 659.25,
+          "beats": 0.7
+        },
+        {
+          "frequency": 587.33,
+          "beats": 0.7
+        },
+        {
+          "frequency": 523.25,
+          "beats": 1.1
+        },
+        {
+          "frequency": 392,
+          "beats": 0.9
+        },
+        {
+          "frequency": 440,
+          "beats": 0.9
+        },
+        {
+          "frequency": 523.25,
+          "beats": 1.2
+        },
+        {
+          "frequency": 0,
+          "beats": 0.3
+        }
       ],
       "bpm": 108
     },
@@ -135,19 +231,141 @@
         "to": "#9961ff"
       },
       "notes": [
-        { "frequency": 293.66, "beats": 0.8 },
-        { "frequency": 349.23, "beats": 0.8 },
-        { "frequency": 392.0, "beats": 0.9 },
-        { "frequency": 440.0, "beats": 0.9 },
-        { "frequency": 392.0, "beats": 0.8 },
-        { "frequency": 349.23, "beats": 0.8 },
-        { "frequency": 293.66, "beats": 1.1 },
-        { "frequency": 261.63, "beats": 0.9 },
-        { "frequency": 293.66, "beats": 0.9 },
-        { "frequency": 349.23, "beats": 1.2 },
-        { "frequency": 0, "beats": 0.3 }
+        {
+          "frequency": 293.66,
+          "beats": 0.8
+        },
+        {
+          "frequency": 349.23,
+          "beats": 0.8
+        },
+        {
+          "frequency": 392,
+          "beats": 0.9
+        },
+        {
+          "frequency": 440,
+          "beats": 0.9
+        },
+        {
+          "frequency": 392,
+          "beats": 0.8
+        },
+        {
+          "frequency": 349.23,
+          "beats": 0.8
+        },
+        {
+          "frequency": 293.66,
+          "beats": 1.1
+        },
+        {
+          "frequency": 261.63,
+          "beats": 0.9
+        },
+        {
+          "frequency": 293.66,
+          "beats": 0.9
+        },
+        {
+          "frequency": 349.23,
+          "beats": 1.2
+        },
+        {
+          "frequency": 0,
+          "beats": 0.3
+        }
       ],
       "bpm": 102
     }
-  ]
+  ],
+  "communityPosts": [
+    {
+      "id": "community-post-mowsy4bi-eo03hw",
+      "author": {
+        "name": "Allen",
+        "avatar": "/images/avatar.jpg"
+      },
+      "content": "欢迎大家到来",
+      "createdAt": "2026-05-08T10:58:44.958Z",
+      "likes": 0,
+      "comments": [
+        {
+          "id": "community-comment-mowsyaoc-etnq46",
+          "author": {
+            "name": "旅人",
+            "avatar": "/images/avatar.jpg"
+          },
+          "content": "nb",
+          "createdAt": "2026-05-08T10:58:53.196Z",
+          "likes": 0,
+          "likedBy": []
+        }
+      ],
+      "likedBy": []
+    },
+    {
+      "id": "post-night-breeze",
+      "author": {
+        "name": "Allen",
+        "avatar": "/images/avatar.jpg"
+      },
+      "content": "把夜色和旋律放进同一页之后，博客终于有了想留下来多看一会儿的氛围。欢迎在这里分享你最近收藏的片段、音乐和灵感。",
+      "createdAt": "2026-05-07T19:20:00.000Z",
+      "likes": 0,
+      "comments": [
+        {
+          "id": "community-comment-1",
+          "author": {
+            "name": "Mika",
+            "avatar": "/images/avatar.jpg"
+          },
+          "content": "这个社区入口很适合放短感想，像在深夜电台里留一句话。",
+          "createdAt": "2026-05-07T20:05:00.000Z",
+          "likes": 0
+        }
+      ]
+    },
+    {
+      "id": "post-city-lights",
+      "author": {
+        "name": "Sora",
+        "avatar": "/images/avatar.jpg"
+      },
+      "content": "刚从时间线页翻回首页，感觉像在电影片尾回到主画面。你们最近最想补完哪一篇文章？",
+      "createdAt": "2026-05-08T08:12:00.000Z",
+      "likes": 0,
+      "comments": [
+        {
+          "id": "community-comment-2",
+          "author": {
+            "name": "Allen",
+            "avatar": "/images/avatar.jpg"
+          },
+          "content": "想先把关于播放器和页面动效的那篇写完整，也欢迎点文章页下方评论催更。",
+          "createdAt": "2026-05-08T08:45:00.000Z",
+          "likes": 0
+        }
+      ]
+    }
+  ],
+  "articleComments": {},
+  "playerStates": {
+    "abfaf198f86872e80809d95e9247fa057560e7e0": {
+      "trackIndex": 0,
+      "currentTime": 1.193914,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-08T12:41:54.017Z"
+    },
+    "73df87bc32548c48426eafb79a985a94af57e0db": {
+      "trackIndex": 0,
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-08T12:41:35.342Z"
+    }
+  }
 }

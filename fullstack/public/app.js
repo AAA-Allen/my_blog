@@ -1,6 +1,8 @@
 (function () {
   var appRoot = document.getElementById("app");
   var audio = document.getElementById("audioPlayer");
+  var backgroundAudio = document.getElementById("backgroundAudio");
+  var backgroundVideo = document.querySelector(".video-background video");
 
   if (!appRoot) {
     return;
@@ -13,6 +15,16 @@
     document.body.appendChild(audio);
   }
 
+  if (!backgroundAudio) {
+    backgroundAudio = document.createElement("audio");
+    backgroundAudio.id = "backgroundAudio";
+    backgroundAudio.preload = "metadata";
+    backgroundAudio.loop = true;
+    backgroundAudio.src = "/videos/wallpaper.mp4";
+    backgroundAudio.hidden = true;
+    document.body.appendChild(backgroundAudio);
+  }
+
   var weekNames = ["日", "一", "二", "三", "四", "五", "六"];
   var routeTitleMap = {
     home: "首页",
@@ -21,6 +33,8 @@
     tags: "标签",
     timeline: "时光机",
     about: "关于我",
+    community: "社区广场",
+    admin: "后台统计",
     article: "文章详情",
   };
 
@@ -29,6 +43,10 @@
     tracks: [],
     activeTrackIndex: 0,
     playlistOpen: true,
+    latestArticles: [],
+    backgroundAudioEnabled: readStoredBool("blog-background-audio"),
+    playerSyncTimer: null,
+    lastPlayerAutoSyncSecond: -1,
     calendarState: {
       year: new Date().getFullYear(),
       month: new Date().getMonth(),
@@ -38,7 +56,42 @@
 
   var playerRefs = {};
   var calendarRefs = {};
+  var backgroundRefs = {};
   var playerEventsBound = false;
+  var backgroundEventsBound = false;
+
+  function readStoredBool(key) {
+    try {
+      return window.localStorage.getItem(key) === "true";
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function writeStoredBool(key, value) {
+    try {
+      window.localStorage.setItem(key, String(Boolean(value)));
+    } catch (_error) {
+      return;
+    }
+  }
+
+  function readStoredJson(key) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function writeStoredJson(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (_error) {
+      return;
+    }
+  }
 
   function escapeHtml(value) {
     return String(value)
@@ -59,6 +112,24 @@
     });
   }
 
+  function apiSend(url, method, payload) {
+    return fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload || {}),
+    }).then(function (response) {
+      return response.json().then(function (body) {
+        if (!response.ok) {
+          throw new Error(body && body.message ? body.message : "Request failed: " + response.status);
+        }
+
+        return body;
+      });
+    });
+  }
+
   function parseLocation() {
     var pathname = window.location.pathname;
     var params = new URLSearchParams(window.location.search);
@@ -66,6 +137,7 @@
       path: pathname,
       pageType: "home",
       articleSlug: null,
+      communityPage: Math.max(1, Number(params.get("page")) || 1),
       filters: {
         date: params.get("date") || "",
         category: params.get("category") || "",
@@ -84,20 +156,28 @@
       route.pageType = "timeline";
     } else if (pathname === "/about") {
       route.pageType = "about";
+    } else if (pathname === "/community") {
+      route.pageType = "community";
+    } else if (pathname === "/admin") {
+      route.pageType = "admin";
     } else if (pathname.indexOf("/articles/") === 0) {
       route.pageType = "article";
       route.articleSlug = decodeURIComponent(pathname.replace("/articles/", ""));
     }
 
-    if (route.filters.date) {
-      var selected = new Date(route.filters.date);
-      if (!Number.isNaN(selected.getTime())) {
-        state.calendarState.year = selected.getFullYear();
-        state.calendarState.month = selected.getMonth();
-      }
+    return route;
+  }
+
+  function applyRouteCalendarState(route) {
+    if (!route || !route.filters || !route.filters.date) {
+      return;
     }
 
-    return route;
+    var selected = new Date(route.filters.date);
+    if (!Number.isNaN(selected.getTime())) {
+      state.calendarState.year = selected.getFullYear();
+      state.calendarState.month = selected.getMonth();
+    }
   }
 
   function createCover(label, colorA, colorB) {
@@ -223,6 +303,86 @@
     );
   }
 
+  function formatDateTimeLabel(iso) {
+    if (!iso) return "";
+    var date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  function formatRelativeTime(iso) {
+    if (!iso) return "";
+    var date = new Date(iso);
+    var diff = Date.now() - date.getTime();
+    var minute = 60 * 1000;
+    var hour = 60 * minute;
+    var day = 24 * hour;
+
+    if (diff < hour) {
+      return Math.max(1, Math.round(diff / minute)) + " 分钟前";
+    }
+
+    if (diff < day) {
+      return Math.max(1, Math.round(diff / hour)) + " 小时前";
+    }
+
+    if (diff < day * 7) {
+      return Math.max(1, Math.round(diff / day)) + " 天前";
+    }
+
+    return formatDateTimeLabel(iso);
+  }
+
+  function getAnalyticsProviderLabel(provider) {
+    if (provider === "google-analytics") return "Google Analytics";
+    if (provider === "umami") return "Umami";
+    if (provider === "clarity") return "Microsoft Clarity";
+    return "Plausible";
+  }
+
+  function serializeDataAttributes(attributes) {
+    return Object.keys(attributes)
+      .map(function (key) {
+        return ' data-' + key + '="' + escapeHtml(attributes[key]) + '"';
+      })
+      .join("");
+  }
+
+  function renderLikeButton(options) {
+    return (
+      '<button type="button" class="comment-action' +
+      (options.liked ? " is-liked" : "") +
+      '"' +
+      serializeDataAttributes(options.attributes) +
+      ' aria-pressed="' +
+      (options.liked ? "true" : "false") +
+      '">' +
+      '<i class="fa-' +
+      (options.liked ? "solid" : "regular") +
+      ' fa-heart"></i><span>' +
+      Number(options.count || 0) +
+      "</span>" +
+      (options.label ? "<em>" + escapeHtml(options.label) + "</em>" : "") +
+      "</button>"
+    );
+  }
+
+  function createIdentityFields() {
+    return (
+      '<div class="comment-form__identity">' +
+      '<input type="text" name="name" maxlength="24" placeholder="你的昵称" aria-label="昵称" />' +
+      '<input type="text" name="avatar" maxlength="300" placeholder="头像链接（可选）" aria-label="头像链接" />' +
+      "</div>"
+    );
+  }
+
   function serializeFilters(filters) {
     var params = new URLSearchParams();
 
@@ -282,6 +442,10 @@
   }
 
   function renderPlayerCard() {
+    if (state.route.pageType !== "home") {
+      return "";
+    }
+
     return (
       '<section class="glass-panel player-card" id="playerCard">' +
       '<div class="player-disc">' +
@@ -322,13 +486,28 @@
     );
   }
 
+  function renderMiniPlayer() {
+    return (
+      '<section class="mini-player" id="miniPlayer">' +
+      '<button type="button" class="mini-player__button" id="miniPrevButton" aria-label="上一曲"><i class="fa-solid fa-backward-step"></i></button>' +
+      '<button type="button" class="mini-player__button mini-player__button--play" id="miniPlayButton" aria-label="播放或暂停"><i class="fa-solid fa-play"></i></button>' +
+      '<button type="button" class="mini-player__button" id="miniNextButton" aria-label="下一曲"><i class="fa-solid fa-forward-step"></i></button>' +
+      '<img class="mini-player__cover" id="miniCoverImage" alt="当前歌曲封面" />' +
+      '<div class="mini-player__meta"><strong id="miniTrackTitle">未播放</strong><span id="miniTrackArtist">点击开始播放</span></div>' +
+      "</section>"
+    );
+  }
+
   function renderSiteInfo(stats) {
     return (
       '<section class="glass-panel stat-panel">' +
       '<div class="panel-title"><i class="fa-solid fa-chart-column"></i><span>网站信息</span></div>' +
       '<div class="site-stat-list">' +
-      "<div><span>文章数目</span><strong>" +
-      stats.articleCount +
+      "<div><span>今日浏览量</span><strong>" +
+      stats.todayViewCount +
+      "</strong></div>" +
+      "<div><span>今日访客数</span><strong>" +
+      stats.todayVisitorCount +
       "</strong></div>" +
       "<div><span>本站总浏览量</span><strong>" +
       stats.viewCount +
@@ -336,11 +515,406 @@
       "<div><span>本站访客数</span><strong>" +
       stats.visitorCount +
       "</strong></div>" +
-      "<div><span>最后更新时间</span><strong>" +
-      escapeHtml(stats.updatedLabel) +
-      "</strong></div>" +
       "</div>" +
       "</section>"
+    );
+  }
+
+  function renderAdminMain(pageData) {
+    var admin = pageData.admin;
+    var sourceItems = admin.sources.length
+      ? admin.sources
+          .map(function (item) {
+            return (
+              '<div class="admin-source-row"><span>' +
+              escapeHtml(item.name) +
+              '</span><strong>' +
+              item.count +
+              "</strong></div>"
+            );
+          })
+          .join("")
+      : '<div class="empty-state empty-state--compact">暂时还没有来源统计数据。</div>';
+    var dailyItems = admin.daily.length
+      ? admin.daily
+          .map(function (item) {
+            return (
+              "<tr><td>" +
+              escapeHtml(item.date) +
+              "</td><td>" +
+              item.pageViews +
+              "</td><td>" +
+              item.uniqueVisitors +
+              "</td></tr>"
+            );
+          })
+          .join("")
+      : '<tr><td colspan="3">暂无每日统计数据。</td></tr>';
+
+    return (
+      '<main class="main-column admin-dashboard">' +
+      '<section class="glass-panel page-panel admin-panel">' +
+      '<div class="page-heading"><div><h2>后台统计面板</h2><p>查看来源、今日访问情况，以及第三方统计服务接入状态。</p></div></div>' +
+      '<div class="admin-grid">' +
+      '<article class="admin-stat-card"><span>总浏览量</span><strong>' +
+      admin.overview.totalViews +
+      "</strong></article>" +
+      '<article class="admin-stat-card"><span>总访客数</span><strong>' +
+      admin.overview.totalVisitors +
+      "</strong></article>" +
+      '<article class="admin-stat-card"><span>今日浏览量</span><strong>' +
+      admin.overview.todayViews +
+      "</strong></article>" +
+      '<article class="admin-stat-card"><span>今日访客数</span><strong>' +
+      admin.overview.todayVisitors +
+      "</strong></article>" +
+      '<article class="admin-stat-card"><span>累计点赞</span><strong>' +
+      admin.overview.totalLikes +
+      "</strong></article>" +
+      '<article class="admin-stat-card"><span>累计评论</span><strong>' +
+      admin.overview.totalComments +
+      "</strong></article>" +
+      "</div>" +
+      '<div class="admin-grid admin-grid--two">' +
+      '<section class="admin-section"><div class="panel-title"><i class="fa-solid fa-share-nodes"></i><span>访客来源统计</span></div>' +
+      sourceItems +
+      "</section>" +
+      '<section class="admin-section"><div class="panel-title"><i class="fa-solid fa-signal"></i><span>第三方统计服务</span></div>' +
+      '<div class="admin-third-party">' +
+      '<div><span>当前服务</span><strong>' +
+      escapeHtml(getAnalyticsProviderLabel(admin.thirdParty.provider)) +
+      "</strong></div>" +
+      '<div><span>启用状态</span><strong class="admin-pill' +
+      (admin.thirdParty.enabled ? " is-on" : "") +
+      '">' +
+      (admin.thirdParty.enabled ? "已启用" : "未启用") +
+      "</strong></div>" +
+      '<div><span>配置状态</span><strong class="admin-pill' +
+      (admin.thirdParty.configured ? " is-on" : "") +
+      '">' +
+      (admin.thirdParty.configured ? "已完成" : "待填写凭据") +
+      "</strong></div>" +
+      '<p class="admin-note">如需真正接入专业第三方统计，只要在 `site-data.json` 的 `analytics.thirdParty` 中填写对应域名或 ID 即可生效。</p>' +
+      "</div></section>" +
+      "</div>" +
+      '<section class="admin-section"><div class="panel-title"><i class="fa-solid fa-calendar-days"></i><span>近 7 日趋势</span></div>' +
+      '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>日期</th><th>浏览量</th><th>访客数</th></tr></thead><tbody>' +
+      dailyItems +
+      "</tbody></table></div>" +
+      '<div class="admin-note">最近访问时间：' +
+      escapeHtml(admin.overview.lastVisitLabel) +
+      "</div></section>" +
+      "</section>" +
+      renderPlayerCard() +
+      "</main>"
+    );
+  }
+
+  function renderCommunityComposer() {
+    return (
+      '<section class="glass-panel page-panel community-composer" id="communityComposer">' +
+      '<div class="page-heading"><div><h2>社区广场</h2><p>发布短文、交流感受，让整站多一点轻松互动。</p></div></div>' +
+      '<form class="comment-form comment-form--community" data-form="community-post">' +
+      createIdentityFields() +
+      '<textarea name="content" rows="4" maxlength="1000" placeholder="写下一段短文、状态或你想分享的片段..."></textarea>' +
+      '<div class="comment-form__footer"><span>支持点赞、评论和分页浏览。</span><button type="submit" class="button-primary">发布帖子</button></div>' +
+      "</form>" +
+      "</section>"
+    );
+  }
+
+  function renderCommunityGateway(pageData) {
+    var postCount = pageData && pageData.community && pageData.community.pagination ? pageData.community.pagination.total : 0;
+
+    return (
+      '<section class="glass-panel page-panel community-gateway">' +
+      '<div class="community-gateway__copy">' +
+      "<span>Community Portal</span>" +
+      "<h2>进入社区广场</h2>" +
+      "<p>这里保留原有页面风格，并额外提供快捷跳转，让你可以快速前往发帖区、最新动态和文章页。</p>" +
+      "</div>" +
+      '<div class="community-gateway__actions">' +
+      '<a class="button-primary" href="#communityComposer">去发帖</a>' +
+      '<a class="button-secondary" href="#communityFeed">看动态</a>' +
+      '<a class="button-secondary" href="/archive">看文章</a>' +
+      "</div>" +
+      '<div class="community-gateway__meta">' +
+      "<div><span>当前帖子</span><strong>" +
+      postCount +
+      "</strong></div>" +
+      "<div><span>当前页码</span><strong>" +
+      ((pageData && pageData.community && pageData.community.pagination && pageData.community.pagination.page) || 1) +
+      "</strong></div>" +
+      "<div><span>互动方式</span><strong>发帖 / 评论 / 点赞</strong></div>" +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  function renderCommunityComment(comment, postId) {
+    return (
+      '<article class="comment-item comment-item--community">' +
+      '<img class="comment-avatar" src="' +
+      escapeHtml(comment.author.avatar || "/images/avatar.jpg") +
+      '" alt="' +
+      escapeHtml(comment.author.name) +
+      ' 头像" />' +
+      '<div class="comment-body">' +
+      '<div class="comment-meta"><strong>' +
+      escapeHtml(comment.author.name) +
+      "</strong><span>" +
+      escapeHtml(formatRelativeTime(comment.createdAt)) +
+      "</span></div>" +
+      '<p class="comment-content">' +
+      escapeHtml(comment.content) +
+      "</p>" +
+      '<div class="comment-actions">' +
+      renderLikeButton({
+        liked: comment.liked,
+        count: comment.likes,
+        attributes: {
+          action: "like-community-comment",
+          "post-id": postId,
+          "comment-id": comment.id,
+        },
+      }) +
+      "</div>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderCommunityPost(post) {
+    var comments = Array.isArray(post.comments) ? post.comments : [];
+
+    return (
+      '<article class="glass-panel page-panel community-post">' +
+      '<div class="community-post__header">' +
+      '<div class="community-post__author">' +
+      '<img class="comment-avatar" src="' +
+      escapeHtml(post.author.avatar || "/images/avatar.jpg") +
+      '" alt="' +
+      escapeHtml(post.author.name) +
+      ' 头像" />' +
+      "<div><strong>" +
+      escapeHtml(post.author.name) +
+      "</strong><span>" +
+      escapeHtml(formatDateTimeLabel(post.createdAt)) +
+      "</span></div>" +
+      "</div>" +
+      '<div class="community-post__badge">社区帖子</div>' +
+      "</div>" +
+      '<div class="community-post__content">' +
+      escapeHtml(post.content).replace(/\n/g, "<br />") +
+      "</div>" +
+      '<div class="community-post__actions">' +
+      renderLikeButton({
+        liked: post.liked,
+        count: post.likes,
+        label: "点赞",
+        attributes: {
+          action: "like-community-post",
+          "post-id": post.id,
+        },
+      }) +
+      '<button type="button" class="comment-action" data-action="focus-community-comment" data-post-id="' +
+      escapeHtml(post.id) +
+      '"><i class="fa-regular fa-message"></i><span>' +
+      comments.length +
+      '</span><em>评论</em></button>' +
+      "</div>" +
+      '<div class="community-post__comments">' +
+      '<div class="community-post__comment-title">评论区</div>' +
+      (comments.length
+        ? comments
+            .map(function (comment) {
+              return renderCommunityComment(comment, post.id);
+            })
+            .join("")
+        : '<div class="empty-state empty-state--compact">还没有评论，来做第一个留言的人吧。</div>') +
+      '<form class="comment-form comment-form--inline" data-form="community-comment" data-post-id="' +
+      escapeHtml(post.id) +
+      '">' +
+      createIdentityFields() +
+      '<textarea id="community-comment-' +
+      escapeHtml(post.id) +
+      '" name="content" rows="3" maxlength="600" placeholder="为这条动态写下你的评论..."></textarea>' +
+      '<div class="comment-form__footer"><span>评论提交后会平滑刷新。</span><button type="submit" class="button-secondary">发表评论</button></div>' +
+      "</form>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderCommunityPagination(pagination) {
+    if (!pagination || pagination.totalPages <= 1) {
+      return "";
+    }
+
+    var buttons = [];
+    for (var page = 1; page <= pagination.totalPages; page += 1) {
+      buttons.push(
+        '<button type="button" class="pagination-button' +
+          (page === pagination.page ? " is-active" : "") +
+          '" data-action="community-page" data-page="' +
+          page +
+          '">' +
+          page +
+          "</button>"
+      );
+    }
+
+    return buttons.join("");
+  }
+
+  function renderCommentReply(reply, articleSlug, commentId) {
+    return (
+      '<article class="comment-item comment-item--reply">' +
+      '<img class="comment-avatar" src="' +
+      escapeHtml(reply.author.avatar || "/images/avatar.jpg") +
+      '" alt="' +
+      escapeHtml(reply.author.name) +
+      ' 头像" />' +
+      '<div class="comment-body">' +
+      '<div class="comment-meta"><strong>' +
+      escapeHtml(reply.author.name) +
+      "</strong><span>" +
+      escapeHtml(formatRelativeTime(reply.createdAt)) +
+      "</span></div>" +
+      '<p class="comment-content">' +
+      escapeHtml(reply.content) +
+      "</p>" +
+      '<div class="comment-actions">' +
+      renderLikeButton({
+        liked: reply.liked,
+        count: reply.likes,
+        attributes: {
+          action: "like-article-reply",
+          slug: articleSlug,
+          "comment-id": commentId,
+          "reply-id": reply.id,
+        },
+      }) +
+      "</div>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderArticleComment(comment, articleSlug) {
+    var replies = Array.isArray(comment.replies) ? comment.replies : [];
+
+    return (
+      '<article class="comment-item">' +
+      '<img class="comment-avatar" src="' +
+      escapeHtml(comment.author.avatar || "/images/avatar.jpg") +
+      '" alt="' +
+      escapeHtml(comment.author.name) +
+      ' 头像" />' +
+      '<div class="comment-body">' +
+      '<div class="comment-meta"><strong>' +
+      escapeHtml(comment.author.name) +
+      "</strong><span>" +
+      escapeHtml(formatDateTimeLabel(comment.createdAt)) +
+      "</span></div>" +
+      '<p class="comment-content">' +
+      escapeHtml(comment.content) +
+      "</p>" +
+      '<div class="comment-actions">' +
+      renderLikeButton({
+        liked: comment.liked,
+        count: comment.likes,
+        label: "点赞",
+        attributes: {
+          action: "like-article-comment",
+          slug: articleSlug,
+          "comment-id": comment.id,
+        },
+      }) +
+      '<button type="button" class="comment-action" data-action="toggle-reply-form" data-target="reply-form-' +
+      escapeHtml(comment.id) +
+      '"><i class="fa-regular fa-message"></i><em>回复</em></button>' +
+      "</div>" +
+      (replies.length
+        ? '<div class="comment-replies">' +
+          replies
+            .map(function (reply) {
+              return renderCommentReply(reply, articleSlug, comment.id);
+            })
+            .join("") +
+          "</div>"
+        : "") +
+      '<form class="comment-form comment-form--reply" data-form="article-comment" data-slug="' +
+      escapeHtml(articleSlug) +
+      '" data-parent-id="' +
+      escapeHtml(comment.id) +
+      '" id="reply-form-' +
+      escapeHtml(comment.id) +
+      '" hidden>' +
+      createIdentityFields() +
+      '<textarea name="content" rows="3" maxlength="600" placeholder="写下你的回复..."></textarea>' +
+      '<div class="comment-form__footer"><span>回复会在当前评论下方更新。</span><button type="submit" class="button-secondary">提交回复</button></div>' +
+      "</form>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderArticleCommentsSection(articleSlug, comments) {
+    return (
+      '<section class="glass-panel page-panel comments-panel" id="articleCommentsSection">' +
+      '<div class="page-heading"><div><h2>文章评论</h2><p>欢迎留下你的看法、补充和感受。</p></div></div>' +
+      '<form class="comment-form" data-form="article-comment" data-slug="' +
+      escapeHtml(articleSlug) +
+      '">' +
+      createIdentityFields() +
+      '<textarea name="content" rows="4" maxlength="600" placeholder="写下你的评论，让这篇文章更完整一点..."></textarea>' +
+      '<div class="comment-form__footer"><span>支持回复、点赞和局部刷新。</span><button type="submit" class="button-primary">发表评论</button></div>' +
+      "</form>" +
+      '<div class="comments-stack">' +
+      (comments.length
+        ? comments
+            .map(function (comment) {
+              return renderArticleComment(comment, articleSlug);
+            })
+            .join("")
+        : '<div class="empty-state">还没有评论，欢迎留下第一句留言。</div>') +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  function renderArticleLikeBar(article) {
+    return (
+      '<div class="article-like-bar">' +
+      renderLikeButton({
+        liked: article.liked,
+        count: article.likes,
+        label: article.liked ? "取消点赞" : "点赞文章",
+        attributes: {
+          action: "like-article",
+          slug: article.slug,
+        },
+      }) +
+      "</div>"
+    );
+  }
+
+  function renderCommunityMain(pageData) {
+    return (
+      '<main class="main-column">' +
+      renderCommunityGateway(pageData) +
+      renderCommunityComposer() +
+      '<section class="community-feed" id="communityFeed">' +
+      (pageData.community.items.length
+        ? pageData.community.items.map(renderCommunityPost).join("")
+        : '<section class="glass-panel page-panel"><div class="empty-state">社区里还没有动态，先来发布第一条状态吧。</div></section>') +
+      "</section>" +
+      '<div class="community-pagination" id="communityPagination">' +
+      renderCommunityPagination(pageData.community.pagination) +
+      "</div>" +
+      renderPlayerCard() +
+      "</main>"
     );
   }
 
@@ -419,7 +993,6 @@
         : '<div class="empty-state">没有匹配的文章。</div>') +
       "</div>" +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -462,7 +1035,6 @@
         : '<div class="empty-state">当前分类下暂无文章。</div>') +
       "</div>" +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -505,7 +1077,6 @@
         : '<div class="empty-state">当前标签下暂无文章。</div>') +
       "</div>" +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -554,7 +1125,6 @@
         : '<div class="empty-state">时间线中还没有内容。</div>') +
       "</div>" +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -573,7 +1143,6 @@
       escapeHtml(profile.about) +
       "</p><p>这个页面保留了原型里的动态背景、蓝紫玻璃质感、侧边导航和音乐播放器，同时增加了后端接口、动态文章数据、日历筛选和完整路由。</p></div>" +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -581,14 +1150,13 @@
   function renderArticleMain(pageData) {
     if (!pageData.article) {
       return (
-        '<main class="main-column"><section class="glass-panel page-panel"><div class="empty-state">文章不存在或已被移除。</div></section>' +
-        renderPlayerCard() +
-        "</main>"
+        '<main class="main-column"><section class="glass-panel page-panel"><div class="empty-state">文章不存在或已被移除。</div></section></main>'
       );
     }
 
     var article = pageData.article;
     var related = pageData.related;
+    var comments = Array.isArray(pageData.comments) ? pageData.comments : [];
 
     return (
       '<main class="main-column">' +
@@ -620,14 +1188,15 @@
       '<div class="rich-content">' +
       article.content +
       "</div>" +
+      renderArticleLikeBar(article) +
       "</section>" +
+      renderArticleCommentsSection(article.slug, comments) +
       '<section class="glass-panel page-panel detail-related">' +
       "<h3>相关文章</h3>" +
       (related.length
         ? related.map(renderPostItem).join("")
         : '<div class="empty-state">暂无相关文章。</div>') +
       "</section>" +
-      renderPlayerCard() +
       "</main>"
     );
   }
@@ -688,6 +1257,8 @@
   }
 
   function renderSidebar() {
+    var communityCurrent = state.route.pageType === "community";
+
     return (
       '<aside class="glass-panel side-nav">' +
       '<div class="brand-block"><h1>' +
@@ -715,6 +1286,9 @@
           );
         })
         .join("") +
+      '<a class="menu-item' +
+      (communityCurrent ? " is-active" : "") +
+      '" href="/community"><i class="fa-regular fa-comments"></i><span>社区广场</span></a>' +
       "</nav>" +
       '<div class="side-nav__footer"><div class="side-nav__label">联系我</div>' +
       '<div class="social-dock">' +
@@ -750,8 +1324,12 @@
       "</label>" +
       "</form>" +
       '<div class="topbar-actions">' +
+      '<button class="audio-toggle-button" id="backgroundAudioToggle" type="button" aria-label="切换背景音">' +
+      '<i class="fa-solid fa-wave-square"></i><span id="backgroundAudioState">' +
+      (state.backgroundAudioEnabled ? "背景音开" : "背景音关") +
+      "</span></button>" +
       '<button class="icon-button" type="button" aria-label="通知"><i class="fa-regular fa-bell"></i></button>' +
-      '<button class="icon-button" type="button" aria-label="设置"><i class="fa-solid fa-gear"></i></button>' +
+      '<a class="icon-button" href="/admin" aria-label="统计后台"><i class="fa-solid fa-gear"></i></a>' +
       '<img class="topbar-avatar" src="' +
       escapeHtml(state.siteBundle.profile.avatar) +
       '" alt="' +
@@ -763,7 +1341,14 @@
   }
 
   function renderLayout(mainHtml) {
-    appRoot.innerHTML = '<div class="prototype-shell">' + renderSidebar() + renderTopbar() + mainHtml + renderRightColumn() + "</div>";
+    appRoot.innerHTML =
+      '<div class="prototype-shell">' +
+      renderSidebar() +
+      renderTopbar() +
+      mainHtml +
+      renderRightColumn() +
+      (state.route.pageType === "home" ? "" : renderMiniPlayer()) +
+      "</div>";
   }
 
   function cachePlayerRefs() {
@@ -783,6 +1368,13 @@
       playlistToggle: document.getElementById("playlistToggle"),
       playlistPanel: document.getElementById("playlistPanel"),
       playlistItems: document.getElementById("playlistItems"),
+      miniPlayer: document.getElementById("miniPlayer"),
+      miniCoverImage: document.getElementById("miniCoverImage"),
+      miniTrackTitle: document.getElementById("miniTrackTitle"),
+      miniTrackArtist: document.getElementById("miniTrackArtist"),
+      miniPlayButton: document.getElementById("miniPlayButton"),
+      miniPrevButton: document.getElementById("miniPrevButton"),
+      miniNextButton: document.getElementById("miniNextButton"),
     };
   }
 
@@ -797,13 +1389,33 @@
     };
   }
 
-  function updatePlayButton(isPlaying) {
-    if (!playerRefs.playButton || !playerRefs.playerCard) return;
+  function cacheBackgroundRefs() {
+    backgroundRefs = {
+      toggle: document.getElementById("backgroundAudioToggle"),
+      state: document.getElementById("backgroundAudioState"),
+    };
+  }
 
-    playerRefs.playButton.innerHTML = isPlaying
-      ? '<i class="fa-solid fa-pause"></i>'
-      : '<i class="fa-solid fa-play"></i>';
-    playerRefs.playerCard.classList.toggle("is-playing", isPlaying);
+  function updatePlayButton(isPlaying) {
+    if (playerRefs.playButton) {
+      playerRefs.playButton.innerHTML = isPlaying
+        ? '<i class="fa-solid fa-pause"></i>'
+        : '<i class="fa-solid fa-play"></i>';
+    }
+
+    if (playerRefs.playerCard) {
+      playerRefs.playerCard.classList.toggle("is-playing", isPlaying);
+    }
+
+    if (playerRefs.miniPlayButton) {
+      playerRefs.miniPlayButton.innerHTML = isPlaying
+        ? '<i class="fa-solid fa-pause"></i>'
+        : '<i class="fa-solid fa-play"></i>';
+    }
+
+    if (playerRefs.miniPlayer) {
+      playerRefs.miniPlayer.classList.toggle("is-playing", isPlaying);
+    }
   }
 
   function syncPlaylistState() {
@@ -815,21 +1427,110 @@
   }
 
   function syncPlayerUI() {
-    if (!state.tracks.length || !playerRefs.songTitle) return;
+    if (!state.tracks.length) return;
 
     var track = state.tracks[state.activeTrackIndex];
-    playerRefs.songTitle.textContent = track.title;
-    playerRefs.songArtist.textContent = track.artist;
-    playerRefs.songSubtitle.textContent = track.subtitle;
-    playerRefs.coverImage.src = track.cover;
-    playerRefs.coverImage.alt = track.title + " 专辑封面";
-    playerRefs.playlistPanel.hidden = !state.playlistOpen;
-    playerRefs.volumeRange.value = String(Math.round(audio.volume * 100));
-    playerRefs.currentTime.textContent = formatTime(audio.currentTime);
-    playerRefs.durationTime.textContent = formatTime(audio.duration);
-    playerRefs.progressRange.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
+
+    if (playerRefs.songTitle) playerRefs.songTitle.textContent = track.title;
+    if (playerRefs.songArtist) playerRefs.songArtist.textContent = track.artist;
+    if (playerRefs.songSubtitle) playerRefs.songSubtitle.textContent = track.subtitle;
+    if (playerRefs.coverImage) {
+      playerRefs.coverImage.src = track.cover;
+      playerRefs.coverImage.alt = track.title + " 专辑封面";
+    }
+    if (playerRefs.playlistPanel) {
+      playerRefs.playlistPanel.hidden = !state.playlistOpen;
+    }
+    if (playerRefs.volumeRange) {
+      playerRefs.volumeRange.value = String(Math.round(audio.volume * 100));
+    }
+    if (playerRefs.currentTime) {
+      playerRefs.currentTime.textContent = formatTime(audio.currentTime);
+    }
+    if (playerRefs.durationTime) {
+      playerRefs.durationTime.textContent = formatTime(audio.duration);
+    }
+    if (playerRefs.progressRange) {
+      playerRefs.progressRange.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
+    }
+    if (playerRefs.miniCoverImage) {
+      playerRefs.miniCoverImage.src = track.cover;
+      playerRefs.miniCoverImage.alt = track.title + " 专辑封面";
+    }
+    if (playerRefs.miniTrackTitle) {
+      playerRefs.miniTrackTitle.textContent = track.title;
+    }
+    if (playerRefs.miniTrackArtist) {
+      playerRefs.miniTrackArtist.textContent = track.artist;
+    }
     updatePlayButton(!audio.paused);
     syncPlaylistState();
+  }
+
+  function getPlayerStatePayload() {
+    return {
+      trackIndex: state.activeTrackIndex,
+      currentTime: Number(audio.currentTime || 0),
+      playing: !audio.paused,
+      volume: Number(audio.volume || 0.75),
+      playlistOpen: state.playlistOpen,
+    };
+  }
+
+  function savePlayerState(options) {
+    var payload = getPlayerStatePayload();
+    writeStoredJson("blog-player-state", payload);
+
+    if (options && options.remote === false) {
+      return Promise.resolve(payload);
+    }
+
+    return apiSend("/api/player/state", "POST", payload).catch(function () {
+      return payload;
+    });
+  }
+
+  function restorePlayerState(remoteState) {
+    var savedState = remoteState || readStoredJson("blog-player-state");
+
+    if (savedState) {
+      state.activeTrackIndex = Math.max(0, Number(savedState.trackIndex || 0));
+      state.playlistOpen = Boolean(savedState.playlistOpen);
+      audio.volume = Math.max(0, Math.min(1, Number(savedState.volume || 0.75)));
+      loadTrack(state.activeTrackIndex, false);
+
+      if (Number(savedState.currentTime || 0) > 0 || savedState.playing) {
+        audio.addEventListener(
+          "loadedmetadata",
+          function onRestoreState() {
+            audio.currentTime = Math.min(Number(savedState.currentTime || 0), Number(audio.duration || savedState.currentTime || 0));
+            if (savedState.playing) {
+              audio.play().catch(function () {
+                updatePlayButton(false);
+              });
+            } else {
+              syncPlayerUI();
+            }
+            savePlayerState({ remote: false });
+            audio.removeEventListener("loadedmetadata", onRestoreState);
+          },
+          { once: true }
+        );
+        return;
+      }
+    }
+
+    audio.volume = Number(audio.volume || 0.75);
+    loadTrack(state.activeTrackIndex, false);
+    savePlayerState({ remote: false });
+  }
+
+  function syncBackgroundAudioUI() {
+    if (!backgroundRefs.toggle || !backgroundRefs.state) return;
+
+    backgroundRefs.toggle.classList.toggle("is-active", state.backgroundAudioEnabled);
+    backgroundRefs.toggle.setAttribute("aria-pressed", state.backgroundAudioEnabled ? "true" : "false");
+    backgroundRefs.state.textContent = state.backgroundAudioEnabled ? "背景音开" : "背景音关";
   }
 
   function renderPlaylist() {
@@ -862,6 +1563,7 @@
     audio.src = track.src;
     audio.load();
     syncPlayerUI();
+    savePlayerState({ remote: false });
 
     if (shouldPlay || (!wasPaused && shouldPlay !== false)) {
       audio.play().catch(function () {
@@ -872,6 +1574,43 @@
     }
   }
 
+  function syncBackgroundSourcePosition() {
+    if (!backgroundVideo || !backgroundAudio) return;
+
+    if (backgroundVideo.readyState > 0 && Math.abs(backgroundVideo.currentTime - backgroundAudio.currentTime) > 1.2) {
+      try {
+        backgroundAudio.currentTime = backgroundVideo.currentTime;
+      } catch (_error) {
+        return;
+      }
+    }
+  }
+
+  function tryEnableBackgroundAudio() {
+    if (!state.backgroundAudioEnabled) return Promise.resolve();
+
+    backgroundAudio.volume = 0.45;
+    syncBackgroundSourcePosition();
+    return backgroundAudio.play().catch(function () {
+      state.backgroundAudioEnabled = false;
+      writeStoredBool("blog-background-audio", false);
+      syncBackgroundAudioUI();
+    });
+  }
+
+  function toggleBackgroundAudio() {
+    state.backgroundAudioEnabled = !state.backgroundAudioEnabled;
+    writeStoredBool("blog-background-audio", state.backgroundAudioEnabled);
+    syncBackgroundAudioUI();
+
+    if (!state.backgroundAudioEnabled) {
+      backgroundAudio.pause();
+      return;
+    }
+
+    tryEnableBackgroundAudio();
+  }
+
   function bindPlayerEvents() {
     if (playerEventsBound) return;
     playerEventsBound = true;
@@ -880,27 +1619,67 @@
       if (playerRefs.durationTime) {
         playerRefs.durationTime.textContent = formatTime(audio.duration);
       }
+      syncPlayerUI();
     });
 
     audio.addEventListener("timeupdate", function () {
-      if (!playerRefs.currentTime) return;
-      playerRefs.currentTime.textContent = formatTime(audio.currentTime);
+      if (playerRefs.currentTime) {
+        playerRefs.currentTime.textContent = formatTime(audio.currentTime);
+      }
       if (playerRefs.progressRange && audio.duration) {
         playerRefs.progressRange.value = (audio.currentTime / audio.duration) * 100;
+      }
+      var currentSecond = Math.floor(audio.currentTime || 0);
+      if (currentSecond !== state.lastPlayerAutoSyncSecond) {
+        state.lastPlayerAutoSyncSecond = currentSecond;
+        savePlayerState({ remote: false });
       }
     });
 
     audio.addEventListener("play", function () {
       updatePlayButton(true);
+      savePlayerState();
     });
 
     audio.addEventListener("pause", function () {
       updatePlayButton(false);
+      savePlayerState();
     });
 
     audio.addEventListener("ended", function () {
       loadTrack(state.activeTrackIndex + 1, true);
     });
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        savePlayerState();
+      }
+    });
+
+    window.addEventListener("beforeunload", function () {
+      savePlayerState({ remote: false });
+    });
+  }
+
+  function bindBackgroundEvents() {
+    if (backgroundEventsBound) return;
+    backgroundEventsBound = true;
+
+    if (backgroundVideo) {
+      backgroundVideo.addEventListener("timeupdate", syncBackgroundSourcePosition);
+      backgroundVideo.addEventListener("play", syncBackgroundSourcePosition);
+      backgroundVideo.addEventListener("seeked", syncBackgroundSourcePosition);
+    }
+
+    document.addEventListener(
+      "click",
+      function () {
+        if (state.backgroundAudioEnabled && backgroundAudio.paused) {
+          tryEnableBackgroundAudio();
+        }
+      },
+      { passive: true }
+    );
   }
 
   function renderCalendar() {
@@ -958,6 +1737,37 @@
     calendarRefs.grid.innerHTML = cells.join("");
   }
 
+  function refreshArticleComments(slug) {
+    return apiFetch("/api/articles/" + encodeURIComponent(slug) + "/comments").then(function (result) {
+      var section = document.getElementById("articleCommentsSection");
+      if (section) {
+        section.outerHTML = renderArticleCommentsSection(slug, result.items);
+        bindRenderedEvents();
+      }
+    });
+  }
+
+  function refreshCommunityFeed(page) {
+    return apiFetch("/api/community?page=" + page + "&limit=4").then(function (result) {
+      var feed = document.getElementById("communityFeed");
+      var pagination = document.getElementById("communityPagination");
+
+      state.route.communityPage = result.pagination.page;
+
+      if (feed) {
+        feed.innerHTML = result.items.length
+          ? result.items.map(renderCommunityPost).join("")
+          : '<section class="glass-panel page-panel"><div class="empty-state">社区里还没有动态，先来发布第一条状态吧。</div></section>';
+      }
+
+      if (pagination) {
+        pagination.innerHTML = renderCommunityPagination(result.pagination);
+      }
+
+      bindRenderedEvents();
+    });
+  }
+
   function buildPageData() {
     var filters = state.route.filters;
     var listPromise = apiFetch("/api/articles" + serializeFilters(filters));
@@ -972,8 +1782,30 @@
       });
     }
 
+    if (state.route.pageType === "community") {
+      return Promise.all([apiFetch("/api/community?page=" + state.route.communityPage + "&limit=4"), fullListPromise]).then(function (results) {
+        return {
+          community: results[0],
+          allArticles: results[1].items,
+        };
+      });
+    }
+
+    if (state.route.pageType === "admin") {
+      return Promise.all([apiFetch("/api/admin/stats"), fullListPromise]).then(function (results) {
+        return {
+          admin: results[0],
+          allArticles: results[1].items,
+        };
+      });
+    }
+
     if (state.route.pageType === "article") {
-      return Promise.all([apiFetch("/api/articles/" + encodeURIComponent(state.route.articleSlug)), fullListPromise])
+      return Promise.all([
+        apiFetch("/api/articles/" + encodeURIComponent(state.route.articleSlug)),
+        fullListPromise,
+        apiFetch("/api/articles/" + encodeURIComponent(state.route.articleSlug) + "/comments"),
+      ])
         .then(function (results) {
           var article = results[0];
           var related = results[1].items
@@ -985,6 +1817,7 @@
           return {
             article: article,
             related: related,
+            comments: results[2].items,
             allArticles: results[1].items,
           };
         })
@@ -993,6 +1826,7 @@
             return {
               article: null,
               related: [],
+              comments: [],
               allArticles: result.items,
             };
           });
@@ -1031,6 +1865,12 @@
     } else if (pageType === "about") {
       mainHtml = renderAboutMain();
       setDocumentTitle(routeTitleMap.about);
+    } else if (pageType === "community") {
+      mainHtml = renderCommunityMain(pageData);
+      setDocumentTitle(routeTitleMap.community);
+    } else if (pageType === "admin") {
+      mainHtml = renderAdminMain(pageData);
+      setDocumentTitle(routeTitleMap.admin);
     } else {
       mainHtml = renderArticleMain(pageData);
       setDocumentTitle(pageData.article ? pageData.article.title : routeTitleMap.article);
@@ -1039,8 +1879,10 @@
     renderLayout(mainHtml);
     cachePlayerRefs();
     cacheCalendarRefs();
+    cacheBackgroundRefs();
     renderPlaylist();
     syncPlayerUI();
+    syncBackgroundAudioUI();
     renderCalendar();
     bindRenderedEvents();
   }
@@ -1064,8 +1906,20 @@
       };
     }
 
+    if (playerRefs.miniPrevButton) {
+      playerRefs.miniPrevButton.onclick = function () {
+        loadTrack(state.activeTrackIndex - 1, true);
+      };
+    }
+
     if (playerRefs.nextButton) {
       playerRefs.nextButton.onclick = function () {
+        loadTrack(state.activeTrackIndex + 1, true);
+      };
+    }
+
+    if (playerRefs.miniNextButton) {
+      playerRefs.miniNextButton.onclick = function () {
         loadTrack(state.activeTrackIndex + 1, true);
       };
     }
@@ -1073,6 +1927,7 @@
     if (playerRefs.volumeRange) {
       playerRefs.volumeRange.oninput = function () {
         audio.volume = Number(playerRefs.volumeRange.value) / 100;
+        savePlayerState();
       };
     }
 
@@ -1080,6 +1935,19 @@
       playerRefs.progressRange.oninput = function () {
         if (!audio.duration) return;
         audio.currentTime = (Number(playerRefs.progressRange.value) / 100) * audio.duration;
+        savePlayerState();
+      };
+    }
+
+    if (playerRefs.miniPlayButton) {
+      playerRefs.miniPlayButton.onclick = function () {
+        if (audio.paused) {
+          audio.play().catch(function () {
+            updatePlayButton(false);
+          });
+        } else {
+          audio.pause();
+        }
       };
     }
 
@@ -1087,6 +1955,7 @@
       playerRefs.playlistToggle.onclick = function () {
         state.playlistOpen = !state.playlistOpen;
         syncPlayerUI();
+        savePlayerState();
       };
     }
 
@@ -1095,6 +1964,12 @@
         var item = event.target.closest("li[data-index]");
         if (!item) return;
         loadTrack(Number(item.getAttribute("data-index")), true);
+      };
+    }
+
+    if (backgroundRefs.toggle) {
+      backgroundRefs.toggle.onclick = function () {
+        toggleBackgroundAudio();
       };
     }
 
@@ -1147,6 +2022,180 @@
         navigate("/archive" + serializeFilters({ search: search }));
       };
     }
+
+    Array.prototype.forEach.call(document.querySelectorAll("form[data-form]"), function (form) {
+      form.onsubmit = function (event) {
+        event.preventDefault();
+
+        var formData = new FormData(form);
+        var payload = {
+          name: String(formData.get("name") || "").trim(),
+          avatar: String(formData.get("avatar") || "").trim(),
+          content: String(formData.get("content") || "").trim(),
+        };
+
+        var submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+
+        if (form.dataset.form === "community-post") {
+          apiSend("/api/community/posts", "POST", payload)
+            .then(function () {
+              form.reset();
+              state.route.communityPage = 1;
+              refreshCommunityFeed(1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            })
+            .finally(function () {
+              if (submitButton) submitButton.disabled = false;
+            });
+          return;
+        }
+
+        if (form.dataset.form === "community-comment") {
+          apiSend("/api/community/posts/" + encodeURIComponent(form.dataset.postId) + "/comments", "POST", payload)
+            .then(function () {
+              form.reset();
+              refreshCommunityFeed(state.route.communityPage || 1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            })
+            .finally(function () {
+              if (submitButton) submitButton.disabled = false;
+            });
+          return;
+        }
+
+        if (form.dataset.form === "article-comment") {
+          if (form.dataset.parentId) {
+            payload.parentId = form.dataset.parentId;
+          }
+
+          apiSend("/api/articles/" + encodeURIComponent(form.dataset.slug) + "/comments", "POST", payload)
+            .then(function () {
+              form.reset();
+              refreshArticleComments(form.dataset.slug);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            })
+            .finally(function () {
+              if (submitButton) submitButton.disabled = false;
+            });
+        }
+      };
+    });
+
+    document.querySelectorAll("[data-action]").forEach(function (element) {
+      element.onclick = function () {
+        var action = element.dataset.action;
+
+        if (action === "community-page") {
+          navigate("/community?page=" + Number(element.dataset.page || 1));
+          return;
+        }
+
+        if (action === "focus-community-comment") {
+          var targetInput = document.getElementById("community-comment-" + element.dataset.postId);
+          if (targetInput) {
+            targetInput.focus();
+            targetInput.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          return;
+        }
+
+        if (action === "toggle-reply-form") {
+          var target = document.getElementById(element.dataset.target);
+          if (target) {
+            target.hidden = !target.hidden;
+            if (!target.hidden) {
+              var area = target.querySelector("textarea");
+              if (area) area.focus();
+            }
+          }
+          return;
+        }
+
+        if (action === "like-community-post") {
+          apiSend("/api/community/posts/" + encodeURIComponent(element.dataset.postId) + "/like", "POST")
+            .then(function () {
+              refreshCommunityFeed(state.route.communityPage || 1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "like-community-comment") {
+          apiSend(
+            "/api/community/posts/" +
+              encodeURIComponent(element.dataset.postId) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId) +
+              "/like",
+            "POST"
+          )
+            .then(function () {
+              refreshCommunityFeed(state.route.communityPage || 1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "like-article") {
+          apiSend("/api/articles/" + encodeURIComponent(element.dataset.slug) + "/like", "POST")
+            .then(function () {
+              renderCurrentRoute();
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "like-article-comment") {
+          apiSend(
+            "/api/articles/" +
+              encodeURIComponent(element.dataset.slug) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId) +
+              "/like",
+            "POST"
+          )
+            .then(function () {
+              refreshArticleComments(element.dataset.slug);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "like-article-reply") {
+          apiSend(
+            "/api/articles/" +
+              encodeURIComponent(element.dataset.slug) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId) +
+              "/replies/" +
+              encodeURIComponent(element.dataset.replyId) +
+              "/like",
+            "POST"
+          )
+            .then(function () {
+              refreshArticleComments(element.dataset.slug);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+        }
+      };
+    });
   }
 
   function shouldHandleLink(anchor) {
@@ -1159,6 +2208,8 @@
   }
 
   function navigate(url, replace) {
+    savePlayerState({ remote: false });
+
     if (replace) {
       window.history.replaceState({}, "", url);
     } else {
@@ -1166,6 +2217,7 @@
     }
 
     state.route = parseLocation();
+    applyRouteCalendarState(state.route);
     renderCurrentRoute();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1197,19 +2249,26 @@
 
     window.addEventListener("popstate", function () {
       state.route = parseLocation();
+      applyRouteCalendarState(state.route);
       renderCurrentRoute();
     });
   }
 
   function init() {
-    Promise.all([apiFetch("/api/site"), apiFetch("/api/playlist")])
+    applyRouteCalendarState(state.route);
+
+    Promise.all([apiFetch("/api/site"), apiFetch("/api/playlist"), apiFetch("/api/player/state")])
       .then(function (results) {
         state.siteBundle = results[0];
         state.tracks = normalizeTracks(results[1].items);
         audio.volume = 0.75;
         bindPlayerEvents();
+        bindBackgroundEvents();
         bindGlobalNavigation();
-        loadTrack(0, false);
+        restorePlayerState(results[2] && results[2].item);
+        if (state.backgroundAudioEnabled) {
+          tryEnableBackgroundAudio();
+        }
         renderCurrentRoute();
       })
       .catch(function (error) {
