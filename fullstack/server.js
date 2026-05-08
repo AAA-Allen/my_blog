@@ -171,6 +171,10 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get("/healthz", (_req, res) => {
+  res.json({ ok: true });
+});
+
 app.get("/api/site", (req, res) => {
   const data = readData();
   const { articles, categories, tags } = getCollections(data);
@@ -267,5 +271,5 @@ app.get("/articles/:slug", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Full-stack blog is running at http://localhost:${PORT}`);
+  console.log(`Full-stack blog is running on port ${PORT}`);
 });
