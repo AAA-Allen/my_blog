@@ -9,23 +9,33 @@
     "updatedAt": "2026-05-07T18:30:00.000Z"
   },
   "analytics": {
-    "pageViews": 9,
-    "uniqueVisitors": 2,
-    "likeCount": 0,
+    "pageViews": 31,
+    "uniqueVisitors": 6,
+    "likeCount": 2,
     "commentCount": 0,
-    "lastVisitAt": "2026-05-08T12:40:08.466Z",
+    "lastVisitAt": "2026-05-09T07:56:29.308Z",
     "daily": {
       "2026-05-08": {
-        "pageViews": 9,
-        "uniqueVisitors": 2,
+        "pageViews": 26,
+        "uniqueVisitors": 3,
         "uniqueVisitorFingerprints": {
           "73df87bc32548c48426eafb79a985a94af57e0db": true,
-          "abfaf198f86872e80809d95e9247fa057560e7e0": true
+          "abfaf198f86872e80809d95e9247fa057560e7e0": true,
+          "3df1592af26a20177b3d1d910cace1e33969458b": true
+        }
+      },
+      "2026-05-09": {
+        "pageViews": 5,
+        "uniqueVisitors": 3,
+        "uniqueVisitorFingerprints": {
+          "0a81e23555b662f441d3c301575dff7cdb8818cc": true,
+          "2792ec570f6394aada45f2ad30f461c7c38eff86": true,
+          "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": true
         }
       }
     },
     "sources": {
-      "直接访问": 9
+      "直接访问": 31
     },
     "thirdParty": {
       "provider": "plausible",
@@ -39,11 +49,27 @@
     "visitors": {
       "73df87bc32548c48426eafb79a985a94af57e0db": {
         "firstSeenAt": "2026-05-08T12:25:29.543Z",
-        "lastSeenAt": "2026-05-08T12:25:29.543Z"
+        "lastSeenAt": "2026-05-08T14:11:07.578Z"
       },
       "abfaf198f86872e80809d95e9247fa057560e7e0": {
         "firstSeenAt": "2026-05-08T12:33:24.353Z",
-        "lastSeenAt": "2026-05-08T12:40:08.466Z"
+        "lastSeenAt": "2026-05-08T14:43:35.750Z"
+      },
+      "3df1592af26a20177b3d1d910cace1e33969458b": {
+        "firstSeenAt": "2026-05-08T14:33:39.677Z",
+        "lastSeenAt": "2026-05-08T14:36:20.006Z"
+      },
+      "0a81e23555b662f441d3c301575dff7cdb8818cc": {
+        "firstSeenAt": "2026-05-09T07:23:33.631Z",
+        "lastSeenAt": "2026-05-09T07:23:33.631Z"
+      },
+      "2792ec570f6394aada45f2ad30f461c7c38eff86": {
+        "firstSeenAt": "2026-05-09T07:23:40.858Z",
+        "lastSeenAt": "2026-05-09T07:56:29.308Z"
+      },
+      "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": {
+        "firstSeenAt": "2026-05-09T07:46:23.897Z",
+        "lastSeenAt": "2026-05-09T07:53:30.769Z"
       }
     }
   },
@@ -102,7 +128,19 @@
       "icon": "fa-regular fa-user"
     }
   ],
-  "articles": [],
+  "articles": [
+    {
+      "slug": "hello-world",
+      "title": "关于我",
+      "excerpt": "你们好呀",
+      "category": "未分类",
+      "tags": [],
+      "date": "2026-05-08",
+      "content": "你们好呀",
+      "likes": 0,
+      "likedBy": []
+    }
+  ],
   "playlist": [
     {
       "id": "lemon",
@@ -288,7 +326,7 @@
       },
       "content": "欢迎大家到来",
       "createdAt": "2026-05-08T10:58:44.958Z",
-      "likes": 0,
+      "likes": 1,
       "comments": [
         {
           "id": "community-comment-mowsyaoc-etnq46",
@@ -298,11 +336,15 @@
           },
           "content": "nb",
           "createdAt": "2026-05-08T10:58:53.196Z",
-          "likes": 0,
-          "likedBy": []
+          "likes": 1,
+          "likedBy": [
+            "abfaf198f86872e80809d95e9247fa057560e7e0"
+          ]
         }
       ],
-      "likedBy": []
+      "likedBy": [
+        "abfaf198f86872e80809d95e9247fa057560e7e0"
+      ]
     },
     {
       "id": "post-night-breeze",
@@ -344,20 +386,22 @@
           },
           "content": "想先把关于播放器和页面动效的那篇写完整，也欢迎点文章页下方评论催更。",
           "createdAt": "2026-05-08T08:45:00.000Z",
-          "likes": 0
+          "likes": 0,
+          "likedBy": []
         }
-      ]
+      ],
+      "likedBy": []
     }
   ],
   "articleComments": {},
   "playerStates": {
     "abfaf198f86872e80809d95e9247fa057560e7e0": {
       "trackIndex": 0,
-      "currentTime": 1.193914,
+      "currentTime": 5.073456,
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-08T12:41:54.017Z"
+      "updatedAt": "2026-05-08T14:44:31.622Z"
     },
     "73df87bc32548c48426eafb79a985a94af57e0db": {
       "trackIndex": 0,
@@ -365,7 +409,31 @@
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-08T12:41:35.342Z"
+      "updatedAt": "2026-05-09T04:11:51.145Z"
+    },
+    "0a81e23555b662f441d3c301575dff7cdb8818cc": {
+      "trackIndex": 0,
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-09T07:45:21.330Z"
+    },
+    "2792ec570f6394aada45f2ad30f461c7c38eff86": {
+      "trackIndex": 0,
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": false,
+      "updatedAt": "2026-05-09T07:58:33.230Z"
+    },
+    "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": {
+      "trackIndex": 0,
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-09T07:58:34.095Z"
     }
   }
 }

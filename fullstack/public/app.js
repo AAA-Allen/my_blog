@@ -44,6 +44,10 @@
     activeTrackIndex: 0,
     playlistOpen: true,
     latestArticles: [],
+    adminCollections: {
+      articles: [],
+      playlist: [],
+    },
     backgroundAudioEnabled: readStoredBool("blog-background-audio"),
     playerSyncTimer: null,
     lastPlayerAutoSyncSecond: -1,
@@ -270,14 +274,25 @@
   }
 
   function normalizeTracks(items) {
-    return items.map(function (item) {
+    return (items || []).map(function (item) {
+      var coverValue = item.coverUrl
+        ? item.coverUrl
+        : item.cover && item.cover.label
+          ? createCover(item.cover.label, item.cover.from, item.cover.to)
+          : "";
+      var srcValue = item.audioUrl
+        ? item.audioUrl
+        : item.notes
+          ? createMelodyTrack(item.notes, { bpm: item.bpm })
+          : "";
+
       return {
         id: item.id,
         title: item.title,
         artist: item.artist,
-        subtitle: item.subtitle,
-        cover: createCover(item.cover.label, item.cover.from, item.cover.to),
-        src: createMelodyTrack(item.notes, { bpm: item.bpm }),
+        subtitle: item.subtitle || item.artist || "",
+        cover: coverValue,
+        src: srcValue,
       };
     });
   }
@@ -520,8 +535,97 @@
     );
   }
 
+  function renderAdminArticleItems(items) {
+    if (!items.length) {
+      return '<div class="empty-state empty-state--compact">还没有文章，先在左侧表单里创建第一篇文章吧。</div>';
+    }
+
+    return items
+      .map(function (article) {
+        return (
+          '<article class="admin-record">' +
+          '<div class="admin-record__main">' +
+          "<strong>" +
+          escapeHtml(article.title) +
+          "</strong>" +
+          '<div class="admin-record__meta">' +
+          "<span>" +
+          escapeHtml(article.date && article.date.display ? article.date.display : "") +
+          "</span>" +
+          "<span>" +
+          escapeHtml(article.category || "未分类") +
+          "</span>" +
+          "<span>" +
+          Number(article.likes || 0) +
+          " 赞</span>" +
+          "</div>" +
+          '<p class="admin-record__desc">' +
+          escapeHtml(article.excerpt || "暂无摘要。") +
+          "</p>" +
+          "</div>" +
+          '<div class="admin-record__actions">' +
+          '<a class="button-secondary" href="/articles/' +
+          encodeURIComponent(article.slug) +
+          '">查看</a>' +
+          '<button type="button" class="button-secondary" data-action="edit-admin-article" data-slug="' +
+          escapeHtml(article.slug) +
+          '">编辑</button>' +
+          '<button type="button" class="comment-action comment-action--danger" data-action="delete-admin-article" data-slug="' +
+          escapeHtml(article.slug) +
+          '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
+          "</div>" +
+          "</article>"
+        );
+      })
+      .join("");
+  }
+
+  function renderAdminTrackItems(items) {
+    if (!items.length) {
+      return '<div class="empty-state empty-state--compact">还没有音乐，新增后首页播放器就会直接读取到新的歌单。</div>';
+    }
+
+    return items
+      .map(function (track) {
+        return (
+          '<article class="admin-record">' +
+          '<div class="admin-record__main">' +
+          "<strong>" +
+          escapeHtml(track.title) +
+          "</strong>" +
+          '<div class="admin-record__meta">' +
+          "<span>" +
+          escapeHtml(track.artist || "Unknown Artist") +
+          "</span>" +
+          "<span>" +
+          (track.audioUrl ? "外链音频" : "合成旋律") +
+          "</span>" +
+          "<span>BPM " +
+          Number(track.bpm || 96) +
+          "</span>" +
+          "</div>" +
+          '<p class="admin-record__desc">' +
+          escapeHtml(track.subtitle || "暂无副标题。") +
+          "</p>" +
+          "</div>" +
+          '<div class="admin-record__actions">' +
+          '<button type="button" class="button-secondary" data-action="edit-admin-track" data-id="' +
+          escapeHtml(track.id) +
+          '">编辑</button>' +
+          '<button type="button" class="comment-action comment-action--danger" data-action="delete-admin-track" data-id="' +
+          escapeHtml(track.id) +
+          '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
+          "</div>" +
+          "</article>"
+        );
+      })
+      .join("");
+  }
+
   function renderAdminMain(pageData) {
     var admin = pageData.admin;
+    var adminArticles = pageData.adminCollections && Array.isArray(pageData.adminCollections.articles) ? pageData.adminCollections.articles : [];
+    var adminPlaylist = pageData.adminCollections && Array.isArray(pageData.adminCollections.playlist) ? pageData.adminCollections.playlist : [];
     var sourceItems = admin.sources.length
       ? admin.sources
           .map(function (item) {
@@ -604,6 +708,63 @@
       '<div class="admin-note">最近访问时间：' +
       escapeHtml(admin.overview.lastVisitLabel) +
       "</div></section>" +
+      '<section class="admin-section admin-manager-section">' +
+      '<div class="panel-title"><i class="fa-solid fa-newspaper"></i><span>文章管理</span></div>' +
+      '<div class="admin-manager-grid">' +
+      '<section class="admin-editor">' +
+      '<div class="admin-editor__header"><h3 id="adminArticleFormTitle">新建文章</h3><button type="button" class="button-secondary" data-action="reset-admin-article">清空</button></div>' +
+      '<form class="comment-form admin-form" id="adminArticleForm" data-form="admin-article">' +
+      '<input type="hidden" name="currentSlug" value="" />' +
+      '<div class="admin-form-grid admin-form-grid--two">' +
+      '<input type="text" name="title" maxlength="120" placeholder="文章标题" />' +
+      '<input type="text" name="slug" maxlength="120" placeholder="文章 slug，例如 hello-world" />' +
+      "</div>" +
+      '<div class="admin-form-grid admin-form-grid--three">' +
+      '<input type="date" name="date" />' +
+      '<input type="text" name="category" maxlength="40" placeholder="分类" />' +
+      '<input type="text" name="tags" maxlength="120" placeholder="标签，多个用逗号分隔" />' +
+      "</div>" +
+      '<textarea name="excerpt" rows="3" maxlength="220" placeholder="文章摘要"></textarea>' +
+      '<textarea name="content" rows="12" placeholder="文章正文，支持直接填写 HTML 内容"></textarea>' +
+      '<div class="comment-form__footer"><span>保存后会立即写入文章数据，并同步到归档、标签和详情页。</span><button type="submit" class="button-primary">保存文章</button></div>' +
+      "</form></section>" +
+      '<section class="admin-list-panel"><div class="admin-editor__header"><h3>文章列表</h3><span class="admin-count">共 ' +
+      adminArticles.length +
+      ' 篇</span></div><div class="admin-record-list">' +
+      renderAdminArticleItems(adminArticles) +
+      "</div></section>" +
+      "</div></section>" +
+      '<section class="admin-section admin-manager-section">' +
+      '<div class="panel-title"><i class="fa-solid fa-music"></i><span>音乐管理</span></div>' +
+      '<div class="admin-manager-grid">' +
+      '<section class="admin-editor">' +
+      '<div class="admin-editor__header"><h3 id="adminTrackFormTitle">新增音乐</h3><button type="button" class="button-secondary" data-action="reset-admin-track">清空</button></div>' +
+      '<form class="comment-form admin-form" id="adminTrackForm" data-form="admin-track">' +
+      '<input type="hidden" name="currentId" value="" />' +
+      '<div class="admin-form-grid admin-form-grid--two">' +
+      '<input type="text" name="title" maxlength="80" placeholder="歌曲名称" />' +
+      '<input type="text" name="id" maxlength="80" placeholder="歌曲 ID，例如 lemon" />' +
+      "</div>" +
+      '<div class="admin-form-grid admin-form-grid--three">' +
+      '<input type="text" name="artist" maxlength="80" placeholder="歌手" />' +
+      '<input type="text" name="subtitle" maxlength="140" placeholder="副标题" />' +
+      '<input type="number" name="bpm" min="40" max="220" placeholder="BPM" />' +
+      "</div>" +
+      '<div class="admin-form-grid admin-form-grid--three">' +
+      '<input type="text" name="coverLabel" maxlength="24" placeholder="封面文字" />' +
+      '<input type="text" name="coverFrom" maxlength="20" placeholder="封面起始色，如 #6ea8ff" />' +
+      '<input type="text" name="coverTo" maxlength="20" placeholder="封面结束色，如 #7267ff" />' +
+      "</div>" +
+      '<input type="text" name="audioUrl" maxlength="500" placeholder="音频链接，可选；为空时会使用下方音符 JSON 合成" />' +
+      '<textarea name="notesJson" rows="8" placeholder=\'音符 JSON，例如 [{"frequency":392,"beats":0.6}]\'></textarea>' +
+      '<div class="comment-form__footer"><span>可以填写音频链接，也可以继续用音符 JSON 生成旋律。</span><button type="submit" class="button-primary">保存音乐</button></div>' +
+      "</form></section>" +
+      '<section class="admin-list-panel"><div class="admin-editor__header"><h3>音乐列表</h3><span class="admin-count">共 ' +
+      adminPlaylist.length +
+      ' 首</span></div><div class="admin-record-list">' +
+      renderAdminTrackItems(adminPlaylist) +
+      "</div></section>" +
+      "</div></section>" +
       "</section>" +
       renderPlayerCard() +
       "</main>"
@@ -678,6 +839,11 @@
           "comment-id": comment.id,
         },
       }) +
+      '<button type="button" class="comment-action comment-action--danger" data-action="delete-community-comment" data-post-id="' +
+      escapeHtml(postId) +
+      '" data-comment-id="' +
+      escapeHtml(comment.id) +
+      '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
       "</div>" +
       "</div>" +
       "</article>"
@@ -722,6 +888,9 @@
       '"><i class="fa-regular fa-message"></i><span>' +
       comments.length +
       '</span><em>评论</em></button>' +
+      '<button type="button" class="comment-action comment-action--danger" data-action="delete-community-post" data-post-id="' +
+      escapeHtml(post.id) +
+      '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
       "</div>" +
       '<div class="community-post__comments">' +
       '<div class="community-post__comment-title">评论区</div>' +
@@ -795,6 +964,13 @@
           "reply-id": reply.id,
         },
       }) +
+      '<button type="button" class="comment-action comment-action--danger" data-action="delete-article-reply" data-slug="' +
+      escapeHtml(articleSlug) +
+      '" data-comment-id="' +
+      escapeHtml(commentId) +
+      '" data-reply-id="' +
+      escapeHtml(reply.id) +
+      '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
       "</div>" +
       "</div>" +
       "</article>"
@@ -834,6 +1010,11 @@
       '<button type="button" class="comment-action" data-action="toggle-reply-form" data-target="reply-form-' +
       escapeHtml(comment.id) +
       '"><i class="fa-regular fa-message"></i><em>回复</em></button>' +
+      '<button type="button" class="comment-action comment-action--danger" data-action="delete-article-comment" data-slug="' +
+      escapeHtml(articleSlug) +
+      '" data-comment-id="' +
+      escapeHtml(comment.id) +
+      '"><i class="fa-regular fa-trash-can"></i><em>删除</em></button>' +
       "</div>" +
       (replies.length
         ? '<div class="comment-replies">' +
@@ -1768,6 +1949,86 @@
     });
   }
 
+  function resetAdminArticleForm() {
+    var form = document.getElementById("adminArticleForm");
+    var title = document.getElementById("adminArticleFormTitle");
+
+    if (!form) return;
+
+    form.reset();
+    if (form.elements.currentSlug) {
+      form.elements.currentSlug.value = "";
+    }
+    if (title) {
+      title.textContent = "新建文章";
+    }
+  }
+
+  function resetAdminTrackForm() {
+    var form = document.getElementById("adminTrackForm");
+    var title = document.getElementById("adminTrackFormTitle");
+
+    if (!form) return;
+
+    form.reset();
+    if (form.elements.currentId) {
+      form.elements.currentId.value = "";
+    }
+    if (form.elements.bpm) {
+      form.elements.bpm.value = "96";
+    }
+    if (title) {
+      title.textContent = "新增音乐";
+    }
+  }
+
+  function fillAdminArticleForm(article) {
+    var form = document.getElementById("adminArticleForm");
+    var title = document.getElementById("adminArticleFormTitle");
+
+    if (!form || !article) return;
+
+    form.elements.currentSlug.value = article.slug || "";
+    form.elements.title.value = article.title || "";
+    form.elements.slug.value = article.slug || "";
+    form.elements.date.value = article.date && article.date.iso ? article.date.iso : "";
+    form.elements.category.value = article.category || "";
+    form.elements.tags.value = Array.isArray(article.tags) ? article.tags.join(", ") : "";
+    form.elements.excerpt.value = article.excerpt || "";
+    form.elements.content.value = article.content || "";
+
+    if (title) {
+      title.textContent = "编辑文章";
+    }
+
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function fillAdminTrackForm(track) {
+    var form = document.getElementById("adminTrackForm");
+    var title = document.getElementById("adminTrackFormTitle");
+
+    if (!form || !track) return;
+
+    form.elements.currentId.value = track.id || "";
+    form.elements.id.value = track.id || "";
+    form.elements.title.value = track.title || "";
+    form.elements.artist.value = track.artist || "";
+    form.elements.subtitle.value = track.subtitle || "";
+    form.elements.bpm.value = track.bpm || 96;
+    form.elements.coverLabel.value = track.cover && track.cover.label ? track.cover.label : "";
+    form.elements.coverFrom.value = track.cover && track.cover.from ? track.cover.from : "";
+    form.elements.coverTo.value = track.cover && track.cover.to ? track.cover.to : "";
+    form.elements.audioUrl.value = track.audioUrl || "";
+    form.elements.notesJson.value = Array.isArray(track.notes) && track.notes.length ? JSON.stringify(track.notes, null, 2) : "";
+
+    if (title) {
+      title.textContent = "编辑音乐";
+    }
+
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function buildPageData() {
     var filters = state.route.filters;
     var listPromise = apiFetch("/api/articles" + serializeFilters(filters));
@@ -1792,10 +2053,14 @@
     }
 
     if (state.route.pageType === "admin") {
-      return Promise.all([apiFetch("/api/admin/stats"), fullListPromise]).then(function (results) {
+      return Promise.all([apiFetch("/api/admin/stats"), fullListPromise, apiFetch("/api/playlist")]).then(function (results) {
         return {
           admin: results[0],
           allArticles: results[1].items,
+          adminCollections: {
+            articles: results[1].items,
+            playlist: results[2].items || [],
+          },
         };
       });
     }
@@ -1843,6 +2108,7 @@
 
   function renderByRoute(pageData) {
     state.latestArticles = pageData.allArticles || pageData.articles || [];
+    state.adminCollections = pageData.adminCollections || { articles: [], playlist: [] };
 
     var mainHtml = "";
     var pageType = state.route.pageType;
@@ -2084,6 +2350,71 @@
             .finally(function () {
               if (submitButton) submitButton.disabled = false;
             });
+          return;
+        }
+
+        if (form.dataset.form === "admin-article") {
+          payload = {
+            title: String(formData.get("title") || "").trim(),
+            slug: String(formData.get("slug") || "").trim(),
+            date: String(formData.get("date") || "").trim(),
+            category: String(formData.get("category") || "").trim(),
+            tags: String(formData.get("tags") || "").trim(),
+            excerpt: String(formData.get("excerpt") || "").trim(),
+            content: String(formData.get("content") || "").trim(),
+          };
+
+          apiSend(
+            form.elements.currentSlug && form.elements.currentSlug.value
+              ? "/api/articles/" + encodeURIComponent(form.elements.currentSlug.value)
+              : "/api/articles",
+            form.elements.currentSlug && form.elements.currentSlug.value ? "PUT" : "POST",
+            payload
+          )
+            .then(function () {
+              resetAdminArticleForm();
+              renderCurrentRoute();
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            })
+            .finally(function () {
+              if (submitButton) submitButton.disabled = false;
+            });
+          return;
+        }
+
+        if (form.dataset.form === "admin-track") {
+          payload = {
+            id: String(formData.get("id") || "").trim(),
+            title: String(formData.get("title") || "").trim(),
+            artist: String(formData.get("artist") || "").trim(),
+            subtitle: String(formData.get("subtitle") || "").trim(),
+            bpm: Number(formData.get("bpm") || 96),
+            coverLabel: String(formData.get("coverLabel") || "").trim(),
+            coverFrom: String(formData.get("coverFrom") || "").trim(),
+            coverTo: String(formData.get("coverTo") || "").trim(),
+            audioUrl: String(formData.get("audioUrl") || "").trim(),
+            notesJson: String(formData.get("notesJson") || "").trim(),
+          };
+
+          apiSend(
+            form.elements.currentId && form.elements.currentId.value
+              ? "/api/playlist/" + encodeURIComponent(form.elements.currentId.value)
+              : "/api/playlist",
+            form.elements.currentId && form.elements.currentId.value ? "PUT" : "POST",
+            payload
+          )
+            .then(function () {
+              resetAdminTrackForm();
+              renderCurrentRoute();
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            })
+            .finally(function () {
+              if (submitButton) submitButton.disabled = false;
+            });
         }
       };
     });
@@ -2129,6 +2460,21 @@
           return;
         }
 
+        if (action === "delete-community-post") {
+          if (!window.confirm("确认删除这条帖子吗？删除后不可恢复。")) {
+            return;
+          }
+
+          apiSend("/api/community/posts/" + encodeURIComponent(element.dataset.postId), "DELETE")
+            .then(function () {
+              refreshCommunityFeed(state.route.communityPage || 1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
         if (action === "like-community-comment") {
           apiSend(
             "/api/community/posts/" +
@@ -2147,9 +2493,88 @@
           return;
         }
 
+        if (action === "delete-community-comment") {
+          if (!window.confirm("确认删除这条评论吗？删除后不可恢复。")) {
+            return;
+          }
+
+          apiSend(
+            "/api/community/posts/" +
+              encodeURIComponent(element.dataset.postId) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId),
+            "DELETE"
+          )
+            .then(function () {
+              refreshCommunityFeed(state.route.communityPage || 1);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
         if (action === "like-article") {
           apiSend("/api/articles/" + encodeURIComponent(element.dataset.slug) + "/like", "POST")
             .then(function () {
+              renderCurrentRoute();
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "reset-admin-article") {
+          resetAdminArticleForm();
+          return;
+        }
+
+        if (action === "reset-admin-track") {
+          resetAdminTrackForm();
+          return;
+        }
+
+        if (action === "edit-admin-article") {
+          var articleMatch = (state.adminCollections.articles || []).find(function (item) {
+            return item.slug === element.dataset.slug;
+          });
+          fillAdminArticleForm(articleMatch);
+          return;
+        }
+
+        if (action === "delete-admin-article") {
+          if (!window.confirm("确认删除这篇文章吗？文章评论也会一起删除。")) {
+            return;
+          }
+
+          apiSend("/api/articles/" + encodeURIComponent(element.dataset.slug), "DELETE")
+            .then(function () {
+              resetAdminArticleForm();
+              renderCurrentRoute();
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "edit-admin-track") {
+          var trackMatch = (state.adminCollections.playlist || []).find(function (item) {
+            return item.id === element.dataset.id;
+          });
+          fillAdminTrackForm(trackMatch);
+          return;
+        }
+
+        if (action === "delete-admin-track") {
+          if (!window.confirm("确认删除这首音乐吗？删除后播放器列表会立即更新。")) {
+            return;
+          }
+
+          apiSend("/api/playlist/" + encodeURIComponent(element.dataset.id), "DELETE")
+            .then(function () {
+              resetAdminTrackForm();
               renderCurrentRoute();
             })
             .catch(function (error) {
@@ -2176,6 +2601,27 @@
           return;
         }
 
+        if (action === "delete-article-comment") {
+          if (!window.confirm("确认删除这条评论及其回复吗？删除后不可恢复。")) {
+            return;
+          }
+
+          apiSend(
+            "/api/articles/" +
+              encodeURIComponent(element.dataset.slug) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId),
+            "DELETE"
+          )
+            .then(function () {
+              refreshArticleComments(element.dataset.slug);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
         if (action === "like-article-reply") {
           apiSend(
             "/api/articles/" +
@@ -2186,6 +2632,29 @@
               encodeURIComponent(element.dataset.replyId) +
               "/like",
             "POST"
+          )
+            .then(function () {
+              refreshArticleComments(element.dataset.slug);
+            })
+            .catch(function (error) {
+              window.alert(error.message);
+            });
+          return;
+        }
+
+        if (action === "delete-article-reply") {
+          if (!window.confirm("确认删除这条回复吗？删除后不可恢复。")) {
+            return;
+          }
+
+          apiSend(
+            "/api/articles/" +
+              encodeURIComponent(element.dataset.slug) +
+              "/comments/" +
+              encodeURIComponent(element.dataset.commentId) +
+              "/replies/" +
+              encodeURIComponent(element.dataset.replyId),
+            "DELETE"
           )
             .then(function () {
               refreshArticleComments(element.dataset.slug);

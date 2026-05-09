@@ -73,9 +73,161 @@ function ensurePlayerStates(data) {
   return data.playerStates;
 }
 
+function ensureArticles(data) {
+  if (!Array.isArray(data.articles)) {
+    data.articles = [];
+  }
+
+  return data.articles;
+}
+
+function ensurePlaylist(data) {
+  if (!Array.isArray(data.playlist)) {
+    data.playlist = [];
+  }
+
+  return data.playlist;
+}
+
 function readNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+function slugify(value) {
+  return sanitizeText(value, 120)
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9\-\u4e00-\u9fa5]/g, "")
+    .replace(/\-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function stripHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sanitizeTagList(input) {
+  const rawItems = Array.isArray(input) ? input : String(input || "").split(/[,\n]/);
+  const seen = new Set();
+
+  return rawItems
+    .map((item) => sanitizeText(item, 20))
+    .filter((item) => {
+      if (!item || seen.has(item)) {
+        return false;
+      }
+
+      seen.add(item);
+      return true;
+    })
+    .slice(0, 10);
+}
+
+function normalizeArticlePayload(input, fallbackSlug) {
+  const title = sanitizeText(input && input.title, 120);
+  const content = String((input && input.content) || "").trim();
+
+  if (!title) {
+    return { error: "文章标题不能为空。" };
+  }
+
+  if (!content) {
+    return { error: "文章正文不能为空。" };
+  }
+
+  const slug = slugify((input && input.slug) || title) || fallbackSlug || createId("article");
+  const excerpt =
+    sanitizeText(input && input.excerpt, 220) || sanitizeText(stripHtml(content), 220) || "这是一篇新的博客文章。";
+  const category = sanitizeText(input && input.category, 40) || "未分类";
+  const tags = sanitizeTagList(input && input.tags);
+  const dateValue = sanitizeText(input && input.date, 40) || new Date().toISOString().slice(0, 10);
+  const parsedDate = new Date(dateValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return { error: "文章日期格式不正确。" };
+  }
+
+  return {
+    value: {
+      slug,
+      title,
+      excerpt,
+      category,
+      tags,
+      date: parsedDate.toISOString().slice(0, 10),
+      content,
+    },
+  };
+}
+
+function normalizeTrackNotes(input) {
+  let notes = [];
+
+  if (Array.isArray(input && input.notes)) {
+    notes = input.notes;
+  } else if (typeof (input && input.notesJson) === "string" && String(input.notesJson).trim()) {
+    try {
+      notes = JSON.parse(String(input.notesJson));
+    } catch (_error) {
+      return { error: "音符 JSON 格式不正确。" };
+    }
+  }
+
+  if (!Array.isArray(notes)) {
+    return { error: "音符数据必须是数组。" };
+  }
+
+  return {
+    value: notes.slice(0, 160).map((note) => ({
+      frequency: Math.max(0, readNumber(note && note.frequency, 0)),
+      beats: Math.max(0.1, readNumber(note && note.beats, 0.5)),
+    })),
+  };
+}
+
+function normalizeTrackPayload(input, existingId) {
+  const title = sanitizeText(input && input.title, 80);
+  if (!title) {
+    return { error: "歌曲名称不能为空。" };
+  }
+
+  const artist = sanitizeText(input && input.artist, 80) || "Unknown Artist";
+  const subtitle = sanitizeText(input && input.subtitle, 140) || artist;
+  const coverLabel = sanitizeText(input && input.coverLabel, 24) || title.slice(0, 8);
+  const coverFrom = sanitizeText(input && input.coverFrom, 20) || "#6ea8ff";
+  const coverTo = sanitizeText(input && input.coverTo, 20) || "#7267ff";
+  const audioUrl = sanitizeText(input && input.audioUrl, 500);
+  const bpm = Math.max(40, Math.min(220, Math.round(readNumber(input && input.bpm, 96))));
+  const normalizedNotes = normalizeTrackNotes(input);
+
+  if (normalizedNotes.error) {
+    return normalizedNotes;
+  }
+
+  if (!audioUrl && !normalizedNotes.value.length) {
+    return { error: "请提供音频链接，或者填写可解析的音符 JSON。" };
+  }
+
+  return {
+    value: {
+      id: sanitizeText(input && input.id, 80) || existingId || createId("track"),
+      title,
+      artist,
+      subtitle,
+      cover: {
+        label: coverLabel,
+        from: coverFrom,
+        to: coverTo,
+      },
+      bpm,
+      notes: normalizedNotes.value,
+      audioUrl,
+    },
+  };
 }
 
 function ensureAnalytics(data) {
@@ -254,6 +406,48 @@ function findCommunityPostById(data, postId) {
   return ensureCommunityPosts(data).find((post) => post.id === postId) || null;
 }
 
+function getCommunityPostLikeCount(post) {
+  const comments = Array.isArray(post && post.comments) ? post.comments : [];
+  return (
+    Number((post && post.likes) || 0) +
+    comments.reduce(function (total, comment) {
+      return total + Number((comment && comment.likes) || 0);
+    }, 0)
+  );
+}
+
+function getCommunityPostCommentCount(post) {
+  return Array.isArray(post && post.comments) ? post.comments.length : 0;
+}
+
+function getCommentBranchLikeCount(comment) {
+  const replies = Array.isArray(comment && comment.replies) ? comment.replies : [];
+  return (
+    Number((comment && comment.likes) || 0) +
+    replies.reduce(function (total, reply) {
+      return total + getCommentBranchLikeCount(reply);
+    }, 0)
+  );
+}
+
+function getCommentBranchCount(comment) {
+  const replies = Array.isArray(comment && comment.replies) ? comment.replies : [];
+  return 1 + replies.reduce(function (total, reply) { return total + getCommentBranchCount(reply); }, 0);
+}
+
+function getArticleCommentTotals(data, slug) {
+  const articleComments = ensureArticleComments(data);
+  const comments = Array.isArray(articleComments[slug]) ? articleComments[slug] : [];
+
+  return comments.reduce(
+    (total, comment) => ({
+      likeCount: total.likeCount + getCommentBranchLikeCount(comment),
+      commentCount: total.commentCount + getCommentBranchCount(comment),
+    }),
+    { likeCount: 0, commentCount: 0 }
+  );
+}
+
 function findArticleCommentById(data, slug, commentId) {
   const articleComments = ensureArticleComments(data);
   const comments = Array.isArray(articleComments[slug]) ? articleComments[slug] : [];
@@ -280,10 +474,18 @@ function formatDateParts(dateString) {
 }
 
 function enrichArticle(article) {
-  const date = formatDateParts(article.date);
+  const safeArticle = {
+    ...article,
+    excerpt: String(article.excerpt || ""),
+    content: String(article.content || ""),
+    category: String(article.category || "未分类"),
+    tags: Array.isArray(article.tags) ? article.tags : [],
+    likes: Number(article.likes || 0),
+  };
+  const date = formatDateParts(safeArticle.date || new Date().toISOString().slice(0, 10));
 
   return {
-    ...article,
+    ...safeArticle,
     date,
   };
 }
@@ -293,7 +495,7 @@ function uniqueValues(items) {
 }
 
 function getCollections(data) {
-  const articles = data.articles.map(enrichArticle).sort((a, b) => b.date.iso.localeCompare(a.date.iso));
+  const articles = ensureArticles(data).map(enrichArticle).sort((a, b) => b.date.iso.localeCompare(a.date.iso));
   const categories = uniqueValues(articles.map((article) => article.category)).map((name) => ({
     name,
     count: articles.filter((article) => article.category === name).length,
@@ -644,6 +846,32 @@ app.get("/api/articles", (req, res) => {
   });
 });
 
+app.post("/api/articles", (req, res) => {
+  const data = readData();
+  const articles = ensureArticles(data);
+  const normalized = normalizeArticlePayload(req.body, createId("article"));
+
+  if (normalized.error) {
+    res.status(400).json({ message: normalized.error });
+    return;
+  }
+
+  if (articles.some((item) => item.slug === normalized.value.slug)) {
+    res.status(409).json({ message: "文章链接标识已存在，请更换 slug。" });
+    return;
+  }
+
+  const article = {
+    ...normalized.value,
+    likes: 0,
+    likedBy: [],
+  };
+
+  articles.unshift(article);
+  writeData(data);
+  res.status(201).json({ item: enrichArticle(article) });
+});
+
 app.get("/api/articles/:slug", (req, res) => {
   const data = readData();
   const article = findArticleOrNull(data, req.params.slug);
@@ -654,6 +882,70 @@ app.get("/api/articles/:slug", (req, res) => {
   }
 
   res.json(decorateArticle(article, createVisitorFingerprint(req)));
+});
+
+app.put("/api/articles/:slug", (req, res) => {
+  const data = readData();
+  const articles = ensureArticles(data);
+  const articleComments = ensureArticleComments(data);
+  const article = articles.find((item) => item.slug === req.params.slug);
+  const normalized = normalizeArticlePayload(req.body, req.params.slug);
+
+  if (!article) {
+    res.status(404).json({ message: "Article not found." });
+    return;
+  }
+
+  if (normalized.error) {
+    res.status(400).json({ message: normalized.error });
+    return;
+  }
+
+  if (normalized.value.slug !== req.params.slug && articles.some((item) => item.slug === normalized.value.slug)) {
+    res.status(409).json({ message: "文章链接标识已存在，请更换 slug。" });
+    return;
+  }
+
+  const preservedLikes = Number(article.likes || 0);
+  const preservedLikedBy = Array.isArray(article.likedBy) ? article.likedBy.slice() : [];
+  const previousSlug = article.slug;
+
+  Object.assign(article, normalized.value, {
+    likes: preservedLikes,
+    likedBy: preservedLikedBy,
+  });
+
+  if (previousSlug !== article.slug && Array.isArray(articleComments[previousSlug])) {
+    articleComments[article.slug] = articleComments[previousSlug];
+    delete articleComments[previousSlug];
+  }
+
+  writeData(data);
+  res.json({ item: enrichArticle(article) });
+});
+
+app.delete("/api/articles/:slug", (req, res) => {
+  const data = readData();
+  const analytics = ensureAnalytics(data);
+  const articles = ensureArticles(data);
+  const articleComments = ensureArticleComments(data);
+  const articleIndex = articles.findIndex((item) => item.slug === req.params.slug);
+
+  if (articleIndex < 0) {
+    res.status(404).json({ message: "Article not found." });
+    return;
+  }
+
+  const article = articles[articleIndex];
+  const commentTotals = getArticleCommentTotals(data, req.params.slug);
+
+  analytics.likeCount = Math.max(0, analytics.likeCount - Number(article.likes || 0) - commentTotals.likeCount);
+  analytics.commentCount = Math.max(0, analytics.commentCount - commentTotals.commentCount);
+
+  delete articleComments[req.params.slug];
+  articles.splice(articleIndex, 1);
+  writeData(data);
+  res.json({ ok: true });
 });
 
 app.post("/api/articles/:slug/like", (req, res) => {
@@ -693,7 +985,69 @@ app.get("/api/timeline", (req, res) => {
 
 app.get("/api/playlist", (req, res) => {
   const data = readData();
-  res.json({ items: data.playlist });
+  res.json({ items: ensurePlaylist(data) });
+});
+
+app.post("/api/playlist", (req, res) => {
+  const data = readData();
+  const playlist = ensurePlaylist(data);
+  const normalized = normalizeTrackPayload(req.body);
+
+  if (normalized.error) {
+    res.status(400).json({ message: normalized.error });
+    return;
+  }
+
+  if (playlist.some((item) => item.id === normalized.value.id)) {
+    res.status(409).json({ message: "歌曲 ID 已存在，请更换后再试。" });
+    return;
+  }
+
+  playlist.unshift(normalized.value);
+  writeData(data);
+  res.status(201).json({ item: normalized.value });
+});
+
+app.put("/api/playlist/:id", (req, res) => {
+  const data = readData();
+  const playlist = ensurePlaylist(data);
+  const trackIndex = playlist.findIndex((item) => item.id === req.params.id);
+
+  if (trackIndex < 0) {
+    res.status(404).json({ message: "Track not found." });
+    return;
+  }
+
+  const normalized = normalizeTrackPayload(req.body, req.params.id);
+
+  if (normalized.error) {
+    res.status(400).json({ message: normalized.error });
+    return;
+  }
+
+  if (normalized.value.id !== req.params.id && playlist.some((item) => item.id === normalized.value.id)) {
+    res.status(409).json({ message: "歌曲 ID 已存在，请更换后再试。" });
+    return;
+  }
+
+  playlist[trackIndex] = normalized.value;
+  writeData(data);
+  res.json({ item: normalized.value });
+});
+
+app.delete("/api/playlist/:id", (req, res) => {
+  const data = readData();
+  const playlist = ensurePlaylist(data);
+  const trackIndex = playlist.findIndex((item) => item.id === req.params.id);
+
+  if (trackIndex < 0) {
+    res.status(404).json({ message: "Track not found." });
+    return;
+  }
+
+  playlist.splice(trackIndex, 1);
+  writeData(data);
+  res.json({ ok: true });
 });
 
 app.get("/api/player/state", (req, res) => {
@@ -755,6 +1109,25 @@ app.post("/api/community/posts", (req, res) => {
   res.status(201).json({ item: post });
 });
 
+app.delete("/api/community/posts/:postId", (req, res) => {
+  const data = readData();
+  const posts = ensureCommunityPosts(data);
+  const analytics = ensureAnalytics(data);
+  const postIndex = posts.findIndex((post) => post.id === req.params.postId);
+
+  if (postIndex < 0) {
+    res.status(404).json({ message: "Post not found." });
+    return;
+  }
+
+  const post = posts[postIndex];
+  analytics.likeCount = Math.max(0, analytics.likeCount - getCommunityPostLikeCount(post));
+  analytics.commentCount = Math.max(0, analytics.commentCount - getCommunityPostCommentCount(post));
+  posts.splice(postIndex, 1);
+  writeData(data);
+  res.json({ ok: true });
+});
+
 app.post("/api/community/posts/:postId/like", (req, res) => {
   const data = readData();
   const post = findCommunityPostById(data, req.params.postId);
@@ -805,6 +1178,30 @@ app.post("/api/community/posts/:postId/comments", (req, res) => {
   analytics.commentCount += 1;
   writeData(data);
   res.status(201).json({ item: comment });
+});
+
+app.delete("/api/community/posts/:postId/comments/:commentId", (req, res) => {
+  const data = readData();
+  const post = findCommunityPostById(data, req.params.postId);
+  const analytics = ensureAnalytics(data);
+
+  if (!post || !Array.isArray(post.comments)) {
+    res.status(404).json({ message: "Comment not found." });
+    return;
+  }
+
+  const commentIndex = post.comments.findIndex((item) => item.id === req.params.commentId);
+  if (commentIndex < 0) {
+    res.status(404).json({ message: "Comment not found." });
+    return;
+  }
+
+  const comment = post.comments[commentIndex];
+  analytics.likeCount = Math.max(0, analytics.likeCount - Number(comment.likes || 0));
+  analytics.commentCount = Math.max(0, analytics.commentCount - 1);
+  post.comments.splice(commentIndex, 1);
+  writeData(data);
+  res.json({ ok: true });
 });
 
 app.post("/api/community/posts/:postId/comments/:commentId/like", (req, res) => {
@@ -906,6 +1303,61 @@ app.post("/api/articles/:slug/comments", (req, res) => {
   analytics.commentCount += 1;
   writeData(data);
   res.status(201).json({ item: reply });
+});
+
+app.delete("/api/articles/:slug/comments/:commentId", (req, res) => {
+  const data = readData();
+  const article = findArticleOrNull(data, req.params.slug);
+  const analytics = ensureAnalytics(data);
+
+  if (!article) {
+    res.status(404).json({ message: "Article not found." });
+    return;
+  }
+
+  const articleComments = ensureArticleComments(data);
+  const comments = Array.isArray(articleComments[req.params.slug]) ? articleComments[req.params.slug] : [];
+  const commentIndex = comments.findIndex((comment) => comment.id === req.params.commentId);
+
+  if (commentIndex < 0) {
+    res.status(404).json({ message: "Comment not found." });
+    return;
+  }
+
+  const comment = comments[commentIndex];
+  analytics.likeCount = Math.max(0, analytics.likeCount - getCommentBranchLikeCount(comment));
+  analytics.commentCount = Math.max(0, analytics.commentCount - getCommentBranchCount(comment));
+  comments.splice(commentIndex, 1);
+  articleComments[req.params.slug] = comments;
+  writeData(data);
+  res.json({ ok: true });
+});
+
+app.delete("/api/articles/:slug/comments/:commentId/replies/:replyId", (req, res) => {
+  const data = readData();
+  const article = findArticleOrNull(data, req.params.slug);
+  const analytics = ensureAnalytics(data);
+
+  if (!article) {
+    res.status(404).json({ message: "Article not found." });
+    return;
+  }
+
+  const comment = findArticleCommentById(data, req.params.slug, req.params.commentId);
+  const replies = comment && Array.isArray(comment.replies) ? comment.replies : [];
+  const replyIndex = replies.findIndex((item) => item.id === req.params.replyId);
+
+  if (replyIndex < 0) {
+    res.status(404).json({ message: "Reply not found." });
+    return;
+  }
+
+  const reply = replies[replyIndex];
+  analytics.likeCount = Math.max(0, analytics.likeCount - getCommentBranchLikeCount(reply));
+  analytics.commentCount = Math.max(0, analytics.commentCount - getCommentBranchCount(reply));
+  replies.splice(replyIndex, 1);
+  writeData(data);
+  res.json({ ok: true });
 });
 
 app.post("/api/articles/:slug/comments/:commentId/like", (req, res) => {

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>博客后台管理</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <h1>后台管理</h1>
+          <p>文章、用户、统计统一管理</p>
+        </div>
+
+        <nav class="admin-nav">
+          <button class="admin-nav__item is-active" data-tab="posts">文章管理</button>
+          <button class="admin-nav__item" data-tab="users">用户管理</button>
+          <button class="admin-nav__item" data-tab="stats">统计管理</button>
+        </nav>
+
+        <div class="admin-userbox" id="adminUserBox"></div>
+      </aside>
+
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <div>
+            <h2 id="pageTitle">文章管理</h2>
+            <p id="pageDesc">支持直接写文章、上传 Markdown / Word、编辑和预览。</p>
+          </div>
+        </header>
+
+        <section class="admin-tab is-active" id="tab-posts">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>文章工具栏</h3>
+              <div class="toolbar">
+                <input id="postSearch" class="input" placeholder="搜索标题 / 摘要 / slug" />
+                <select id="postStatusFilter" class="input input-select">
+                  <option value="">全部状态</option>
+                  <option value="draft">草稿</option>
+                  <option value="published">已发布</option>
+                </select>
+                <select id="postCategoryFilter" class="input input-select">
+                  <option value="">全部分类</option>
+                </select>
+                <button id="refreshPostsBtn" class="btn btn-secondary">刷新</button>
+                <button id="importPostBtn" class="btn btn-secondary">导入文件</button>
+                <button id="newPostBtn" class="btn btn-primary">新建文章</button>
+                <button id="batchDeleteBtn" class="btn btn-danger">批量删除</button>
+                <input id="postFileInput" type="file" accept=".md,.doc,.docx" hidden />
+              </div>
+            </div>
+          </div>
+
+          <div class="post-editor-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="editorTitle">新建文章</h3>
+                <div class="toolbar">
+                  <button id="resetPostFormBtn" class="btn btn-secondary">清空</button>
+                  <button id="saveDraftBtn" class="btn btn-secondary">保存草稿</button>
+                  <button id="publishPostBtn" class="btn btn-primary">发布文章</button>
+                </div>
+              </div>
+
+              <form id="postForm" class="form-grid" onsubmit="return false;">
+                <input type="hidden" name="id" />
+                <div class="form-row form-row-2">
+                  <div>
+                    <label>标题</label>
+                    <input name="title" class="input" maxlength="200" />
+                  </div>
+                  <div>
+                    <label>Slug</label>
+                    <input name="slug" class="input" maxlength="150" />
+                  </div>
+                </div>
+
+                <div class="form-row form-row-3">
+                  <div>
+                    <label>分类</label>
+                    <input name="category" class="input" maxlength="50" />
+                  </div>
+                  <div>
+                    <label>标签</label>
+                    <input name="tags" class="input" placeholder="多个标签用逗号分隔" />
+                  </div>
+                  <div>
+                    <label>状态</label>
+                    <select name="status" class="input input-select">
+                      <option value="draft">草稿</option>
+                      <option value="published">已发布</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div>
+                    <label>摘要</label>
+                    <textarea name="excerpt" class="input textarea" rows="3"></textarea>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div>
+                    <label>正文（支持 Markdown / HTML / 图片视频音乐链接）</label>
+                    <textarea name="contentMarkdown" id="postContentInput" class="input textarea textarea-lg" rows="16"></textarea>
+                  </div>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3>实时预览</h3>
+              </div>
+              <div id="postPreview" class="preview-box"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>文章列表</h3>
+              <span id="postCountText" class="muted">共 0 篇</span>
+            </div>
+            <div id="postList" class="record-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>评论管理</h3>
+              <div class="toolbar">
+                <select id="commentPostFilter" class="input input-select">
+                  <option value="">选择文章查看评论</option>
+                </select>
+                <button id="loadCommentsBtn" class="btn btn-secondary">加载评论</button>
+              </div>
+            </div>
+            <div id="commentTreeBox" class="comment-tree-box"></div>
+          </section>
+        </section>
+
+        <section class="admin-tab" id="tab-users">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>用户管理</h3>
+              <div class="toolbar">
+                <button id="refreshUsersBtn" class="btn btn-secondary">刷新</button>
+              </div>
+            </div>
+            <div id="userList" class="record-list"></div>
+          </section>
+        </section>
+
+        <section class="admin-tab" id="tab-stats">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>统计管理</h3>
+              <div class="toolbar">
+                <select id="statsRange" class="input input-select">
+                  <option value="day">按日</option>
+                  <option value="week">按周</option>
+                  <option value="month">按月</option>
+                </select>
+                <button id="refreshStatsBtn" class="btn btn-secondary">刷新</button>
+                <button id="exportStatsBtn" class="btn btn-secondary">导出报表</button>
+                <button id="resetStatsBtn" class="btn btn-danger">统计清零</button>
+              </div>
+            </div>
+
+            <div class="stats-cards">
+              <article class="stat-card">
+                <span>总浏览量</span>
+                <strong id="statViews">0</strong>
+              </article>
+              <article class="stat-card">
+                <span>总评论数</span>
+                <strong id="statComments">0</strong>
+              </article>
+              <article class="stat-card">
+                <span>总点赞数</span>
+                <strong id="statLikes">0</strong>
+              </article>
+            </div>
+
+            <div id="statsTableBox"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/admin.js"></script>
+  </body>
+</html>
