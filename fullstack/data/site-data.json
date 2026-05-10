@@ -9,11 +9,11 @@
     "updatedAt": "2026-05-07T18:30:00.000Z"
   },
   "analytics": {
-    "pageViews": 31,
-    "uniqueVisitors": 6,
+    "pageViews": 40,
+    "uniqueVisitors": 7,
     "likeCount": 2,
-    "commentCount": 0,
-    "lastVisitAt": "2026-05-09T07:56:29.308Z",
+    "commentCount": 1,
+    "lastVisitAt": "2026-05-10T03:56:15.890Z",
     "daily": {
       "2026-05-08": {
         "pageViews": 26,
@@ -32,10 +32,18 @@
           "2792ec570f6394aada45f2ad30f461c7c38eff86": true,
           "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": true
         }
+      },
+      "2026-05-10": {
+        "pageViews": 9,
+        "uniqueVisitors": 2,
+        "uniqueVisitorFingerprints": {
+          "73df87bc32548c48426eafb79a985a94af57e0db": true,
+          "62a18e3a5f4cee50b16e8dded3961ab239c02591": true
+        }
       }
     },
     "sources": {
-      "直接访问": 31
+      "直接访问": 40
     },
     "thirdParty": {
       "provider": "plausible",
@@ -49,7 +57,7 @@
     "visitors": {
       "73df87bc32548c48426eafb79a985a94af57e0db": {
         "firstSeenAt": "2026-05-08T12:25:29.543Z",
-        "lastSeenAt": "2026-05-08T14:11:07.578Z"
+        "lastSeenAt": "2026-05-10T03:50:05.007Z"
       },
       "abfaf198f86872e80809d95e9247fa057560e7e0": {
         "firstSeenAt": "2026-05-08T12:33:24.353Z",
@@ -70,6 +78,10 @@
       "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": {
         "firstSeenAt": "2026-05-09T07:46:23.897Z",
         "lastSeenAt": "2026-05-09T07:53:30.769Z"
+      },
+      "62a18e3a5f4cee50b16e8dded3961ab239c02591": {
+        "firstSeenAt": "2026-05-10T03:44:27.950Z",
+        "lastSeenAt": "2026-05-10T03:56:15.890Z"
       }
     }
   },
@@ -129,6 +141,17 @@
     }
   ],
   "articles": [
+    {
+      "slug": "no",
+      "title": "no",
+      "excerpt": "我不要体测",
+      "category": "未分类",
+      "tags": [],
+      "date": "2026-05-10",
+      "content": "我不要体测",
+      "likes": 0,
+      "likedBy": []
+    },
     {
       "slug": "hello-world",
       "title": "关于我",
@@ -393,7 +416,21 @@
       "likedBy": []
     }
   ],
-  "articleComments": {},
+  "articleComments": {
+    "no": [
+      {
+        "id": "article-comment-moz8jya4-tdo8so",
+        "author": {
+          "name": "李昱鹏",
+          "avatar": "/images/avatar.jpg"
+        },
+        "content": "我也不要",
+        "createdAt": "2026-05-10T03:51:10.156Z",
+        "likes": 0,
+        "replies": []
+      }
+    ]
+  },
   "playerStates": {
     "abfaf198f86872e80809d95e9247fa057560e7e0": {
       "trackIndex": 0,
@@ -417,7 +454,7 @@
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-09T07:45:21.330Z"
+      "updatedAt": "2026-05-09T13:43:26.093Z"
     },
     "2792ec570f6394aada45f2ad30f461c7c38eff86": {
       "trackIndex": 0,
@@ -425,7 +462,7 @@
       "playing": false,
       "volume": 0.75,
       "playlistOpen": false,
-      "updatedAt": "2026-05-09T07:58:33.230Z"
+      "updatedAt": "2026-05-09T11:37:23.038Z"
     },
     "9cb32c0c09ca4e7eec8adecd0b61be2cb32bb464": {
       "trackIndex": 0,
@@ -433,7 +470,15 @@
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-09T07:58:34.095Z"
+      "updatedAt": "2026-05-09T08:28:37.787Z"
+    },
+    "62a18e3a5f4cee50b16e8dded3961ab239c02591": {
+      "trackIndex": 0,
+      "currentTime": 5.073456,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-10T03:59:59.984Z"
     }
   }
 }
