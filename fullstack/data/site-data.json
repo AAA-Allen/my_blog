@@ -9,11 +9,11 @@
     "updatedAt": "2026-05-07T18:30:00.000Z"
   },
   "analytics": {
-    "pageViews": 40,
-    "uniqueVisitors": 7,
+    "pageViews": 186,
+    "uniqueVisitors": 15,
     "likeCount": 2,
     "commentCount": 1,
-    "lastVisitAt": "2026-05-10T03:56:15.890Z",
+    "lastVisitAt": "2026-07-15T12:36:59.205Z",
     "daily": {
       "2026-05-08": {
         "pageViews": 26,
@@ -34,16 +34,40 @@
         }
       },
       "2026-05-10": {
-        "pageViews": 9,
-        "uniqueVisitors": 2,
+        "pageViews": 86,
+        "uniqueVisitors": 3,
         "uniqueVisitorFingerprints": {
           "73df87bc32548c48426eafb79a985a94af57e0db": true,
-          "62a18e3a5f4cee50b16e8dded3961ab239c02591": true
+          "62a18e3a5f4cee50b16e8dded3961ab239c02591": true,
+          "727b47d5a98fa4cde7a51585efb1e6c70cc969ff": true
+        }
+      },
+      "2026-07-14": {
+        "pageViews": 33,
+        "uniqueVisitors": 6,
+        "uniqueVisitorFingerprints": {
+          "1083775d9c0c8e1a56ebf4790103921994839b3b": true,
+          "37b06fbbf5340991c85eaa720072a6159c6c9086": true,
+          "41bb97bf7a7003ab19e3633e09ea716491acda23": true,
+          "d9860ff6c9cf136ae58fc35eb72b9123b0fc89b4": true,
+          "a301cfdb8e1259cfa0163ea86f39386565b7b779": true,
+          "35121565913797fefc613143fbaa12a62e5fbc2a": true
+        }
+      },
+      "2026-07-15": {
+        "pageViews": 36,
+        "uniqueVisitors": 5,
+        "uniqueVisitorFingerprints": {
+          "37b06fbbf5340991c85eaa720072a6159c6c9086": true,
+          "2d7db6ffd75dfa7e21db7709ba08763fde8337f8": true,
+          "1083775d9c0c8e1a56ebf4790103921994839b3b": true,
+          "41bb97bf7a7003ab19e3633e09ea716491acda23": true,
+          "35121565913797fefc613143fbaa12a62e5fbc2a": true
         }
       }
     },
     "sources": {
-      "直接访问": 40
+      "直接访问": 186
     },
     "thirdParty": {
       "provider": "plausible",
@@ -57,7 +81,7 @@
     "visitors": {
       "73df87bc32548c48426eafb79a985a94af57e0db": {
         "firstSeenAt": "2026-05-08T12:25:29.543Z",
-        "lastSeenAt": "2026-05-10T03:50:05.007Z"
+        "lastSeenAt": "2026-05-10T07:35:32.884Z"
       },
       "abfaf198f86872e80809d95e9247fa057560e7e0": {
         "firstSeenAt": "2026-05-08T12:33:24.353Z",
@@ -81,7 +105,39 @@
       },
       "62a18e3a5f4cee50b16e8dded3961ab239c02591": {
         "firstSeenAt": "2026-05-10T03:44:27.950Z",
-        "lastSeenAt": "2026-05-10T03:56:15.890Z"
+        "lastSeenAt": "2026-05-10T07:27:55.294Z"
+      },
+      "727b47d5a98fa4cde7a51585efb1e6c70cc969ff": {
+        "firstSeenAt": "2026-05-10T05:17:48.326Z",
+        "lastSeenAt": "2026-05-10T05:50:46.757Z"
+      },
+      "1083775d9c0c8e1a56ebf4790103921994839b3b": {
+        "firstSeenAt": "2026-07-14T13:47:00.371Z",
+        "lastSeenAt": "2026-07-14T17:02:10.653Z"
+      },
+      "37b06fbbf5340991c85eaa720072a6159c6c9086": {
+        "firstSeenAt": "2026-07-14T13:47:43.817Z",
+        "lastSeenAt": "2026-07-15T03:09:10.363Z"
+      },
+      "41bb97bf7a7003ab19e3633e09ea716491acda23": {
+        "firstSeenAt": "2026-07-14T13:52:27.480Z",
+        "lastSeenAt": "2026-07-15T12:36:59.205Z"
+      },
+      "d9860ff6c9cf136ae58fc35eb72b9123b0fc89b4": {
+        "firstSeenAt": "2026-07-14T13:53:25.391Z",
+        "lastSeenAt": "2026-07-14T13:57:12.130Z"
+      },
+      "a301cfdb8e1259cfa0163ea86f39386565b7b779": {
+        "firstSeenAt": "2026-07-14T13:55:53.636Z",
+        "lastSeenAt": "2026-07-14T15:12:34.130Z"
+      },
+      "35121565913797fefc613143fbaa12a62e5fbc2a": {
+        "firstSeenAt": "2026-07-14T14:49:20.702Z",
+        "lastSeenAt": "2026-07-15T09:05:49.859Z"
+      },
+      "2d7db6ffd75dfa7e21db7709ba08763fde8337f8": {
+        "firstSeenAt": "2026-07-14T17:01:59.617Z",
+        "lastSeenAt": "2026-07-14T17:01:59.617Z"
       }
     }
   },
@@ -142,6 +198,24 @@
   ],
   "articles": [
     {
+      "slug": "今天晚上",
+      "title": "今天晚上",
+      "excerpt": "我想了很多，喜欢的人还是那一种",
+      "category": "未分类",
+      "tags": [],
+      "date": "2026-07-14",
+      "content": "<p>我想了很多，喜欢的人还是那一种</p>",
+      "source": "我想了很多，喜欢的人还是那一种",
+      "format": "markdown",
+      "status": "published",
+      "publishAt": null,
+      "coverMediaId": "",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2026-07-14T17:03:27.791Z",
+      "updatedAt": "2026-07-14T17:03:27.791Z"
+    },
+    {
       "slug": "no",
       "title": "no",
       "excerpt": "我不要体测",
@@ -166,178 +240,49 @@
   ],
   "playlist": [
     {
-      "id": "lemon",
-      "title": "Lemon",
-      "artist": "Prototype Mix",
-      "subtitle": "未闻花名的晚风，吹向银河彼岸。",
+      "id": "netease-66842",
+      "title": "十年",
+      "artist": "陈奕迅",
+      "subtitle": "陈奕迅 · 黑白灰",
       "cover": {
-        "label": "Lemon",
+        "label": "十年",
         "from": "#6ea8ff",
         "to": "#7267ff"
       },
-      "notes": [
-        {
-          "frequency": 392,
-          "beats": 0.6
-        },
-        {
-          "frequency": 440,
-          "beats": 0.6
-        },
-        {
-          "frequency": 523.25,
-          "beats": 0.8
-        },
-        {
-          "frequency": 587.33,
-          "beats": 0.8
-        },
-        {
-          "frequency": 523.25,
-          "beats": 0.7
-        },
-        {
-          "frequency": 440,
-          "beats": 0.7
-        },
-        {
-          "frequency": 392,
-          "beats": 1.1
-        },
-        {
-          "frequency": 329.63,
-          "beats": 0.9
-        },
-        {
-          "frequency": 349.23,
-          "beats": 0.9
-        },
-        {
-          "frequency": 440,
-          "beats": 1.2
-        },
-        {
-          "frequency": 0,
-          "beats": 0.3
-        }
-      ],
-      "bpm": 96
+      "coverUrl": "",
+      "bpm": 96,
+      "notes": [],
+      "audioUrl": "/api/netease/audio/66842"
     },
     {
-      "id": "starlight",
-      "title": "Starlight",
-      "artist": "Prototype Mix",
-      "subtitle": "繁星落在云层之上，城市开始发光。",
+      "id": "netease-1973665667",
+      "title": "海屿你",
+      "artist": "马也_Crabbit",
+      "subtitle": "马也_Crabbit · 海屿你",
       "cover": {
-        "label": "Star",
-        "from": "#8e86ff",
-        "to": "#4d9cff"
+        "label": "海屿你",
+        "from": "#6ea8ff",
+        "to": "#7267ff"
       },
-      "notes": [
-        {
-          "frequency": 523.25,
-          "beats": 0.7
-        },
-        {
-          "frequency": 659.25,
-          "beats": 0.7
-        },
-        {
-          "frequency": 783.99,
-          "beats": 0.8
-        },
-        {
-          "frequency": 698.46,
-          "beats": 0.8
-        },
-        {
-          "frequency": 659.25,
-          "beats": 0.7
-        },
-        {
-          "frequency": 587.33,
-          "beats": 0.7
-        },
-        {
-          "frequency": 523.25,
-          "beats": 1.1
-        },
-        {
-          "frequency": 392,
-          "beats": 0.9
-        },
-        {
-          "frequency": 440,
-          "beats": 0.9
-        },
-        {
-          "frequency": 523.25,
-          "beats": 1.2
-        },
-        {
-          "frequency": 0,
-          "beats": 0.3
-        }
-      ],
-      "bpm": 108
+      "coverUrl": "",
+      "bpm": 96,
+      "notes": [],
+      "audioUrl": "/api/netease/audio/1973665667"
     },
     {
-      "id": "night-ride",
-      "title": "Night Ride",
-      "artist": "Prototype Mix",
-      "subtitle": "公路尽头的霓虹，仍在轻轻闪烁。",
+      "id": "netease-28427776",
+      "title": "当 (Live)",
+      "artist": "动力火车",
+      "subtitle": "动力火车 · 我是歌手第二季 第9期",
       "cover": {
-        "label": "Ride",
-        "from": "#2b3870",
-        "to": "#9961ff"
+        "label": "当 (Live)",
+        "from": "#6ea8ff",
+        "to": "#7267ff"
       },
-      "notes": [
-        {
-          "frequency": 293.66,
-          "beats": 0.8
-        },
-        {
-          "frequency": 349.23,
-          "beats": 0.8
-        },
-        {
-          "frequency": 392,
-          "beats": 0.9
-        },
-        {
-          "frequency": 440,
-          "beats": 0.9
-        },
-        {
-          "frequency": 392,
-          "beats": 0.8
-        },
-        {
-          "frequency": 349.23,
-          "beats": 0.8
-        },
-        {
-          "frequency": 293.66,
-          "beats": 1.1
-        },
-        {
-          "frequency": 261.63,
-          "beats": 0.9
-        },
-        {
-          "frequency": 293.66,
-          "beats": 0.9
-        },
-        {
-          "frequency": 349.23,
-          "beats": 1.2
-        },
-        {
-          "frequency": 0,
-          "beats": 0.3
-        }
-      ],
-      "bpm": 102
+      "coverUrl": "",
+      "bpm": 96,
+      "notes": [],
+      "audioUrl": "/api/netease/audio/28427776"
     }
   ],
   "communityPosts": [
@@ -441,12 +386,12 @@
       "updatedAt": "2026-05-08T14:44:31.622Z"
     },
     "73df87bc32548c48426eafb79a985a94af57e0db": {
-      "trackIndex": 0,
-      "currentTime": 0,
+      "trackIndex": 1,
+      "currentTime": 1.389327,
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-09T04:11:51.145Z"
+      "updatedAt": "2026-05-10T05:44:37.437Z"
     },
     "0a81e23555b662f441d3c301575dff7cdb8818cc": {
       "trackIndex": 0,
@@ -473,12 +418,70 @@
       "updatedAt": "2026-05-09T08:28:37.787Z"
     },
     "62a18e3a5f4cee50b16e8dded3961ab239c02591": {
+      "trackIndex": 2,
+      "currentTime": 0.15,
+      "playing": false,
+      "volume": 0.64,
+      "playlistOpen": true,
+      "updatedAt": "2026-05-10T07:28:02.993Z"
+    },
+    "41bb97bf7a7003ab19e3633e09ea716491acda23": {
+      "trackIndex": 1,
+      "trackId": "netease-1973665667",
+      "currentTime": 1.625471,
+      "playing": false,
+      "volume": 0.64,
+      "playlistOpen": true,
+      "playMode": "repeat-all",
+      "updatedAt": "2026-07-15T13:09:39.185Z"
+    },
+    "d9860ff6c9cf136ae58fc35eb72b9123b0fc89b4": {
       "trackIndex": 0,
-      "currentTime": 5.073456,
+      "currentTime": 0,
       "playing": false,
       "volume": 0.75,
       "playlistOpen": true,
-      "updatedAt": "2026-05-10T03:59:59.984Z"
+      "updatedAt": "2026-07-14T13:53:27.703Z"
+    },
+    "37b06fbbf5340991c85eaa720072a6159c6c9086": {
+      "trackIndex": 1,
+      "trackId": "netease-1973665667",
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "playMode": "repeat-all",
+      "updatedAt": "2026-07-15T13:31:13.186Z"
+    },
+    "35121565913797fefc613143fbaa12a62e5fbc2a": {
+      "trackIndex": 0,
+      "currentTime": 0,
+      "playing": false,
+      "volume": 0.75,
+      "playlistOpen": true,
+      "updatedAt": "2026-07-14T14:50:07.031Z"
     }
+  },
+  "articleVersions": {
+    "今天晚上": [
+      {
+        "id": "article-version-mrkwh7vz-39sugr",
+        "createdAt": "2026-07-14T17:03:27.791Z",
+        "reason": "create",
+        "snapshot": {
+          "title": "今天晚上",
+          "excerpt": "我想了很多，喜欢的人还是那一种",
+          "category": "未分类",
+          "tags": [],
+          "date": "2026-07-14",
+          "content": "<p>我想了很多，喜欢的人还是那一种</p>",
+          "source": "我想了很多，喜欢的人还是那一种",
+          "format": "markdown",
+          "status": "published",
+          "publishAt": null,
+          "coverMediaId": ""
+        }
+      }
+    ]
   }
 }
